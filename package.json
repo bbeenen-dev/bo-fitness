@@ -13,7 +13,7 @@
     "@fullcalendar/daygrid": "^7.1.5",
     "@fullcalendar/interaction": "^7.1.5",
     "@fullcalendar/react": "^7.1.5",
-    "temporal-polyfill": "^0.2.5",
+    "temporal-polyfill": "^1.0.7",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "lucide-react": "^1.74.0",
@@ -31,6 +31,6 @@
     "eslint-config-next": "^16.4.6",
     "postcss": "^8.5.33",
     "tailwindcss": "^4.3.5",
-    "typescript": "^7.0.2"
+    "typescript": "^5.5.2"
   }
 }
