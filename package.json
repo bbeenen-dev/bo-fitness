@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "@fullcalendar/core": "^7.1.5",
-    "@fullcalendar/daygrid": "^6.1.22",
-    "@fullcalendar/interaction": "^6.1.22",
+    "@fullcalendar/daygrid": "^7.1.5",
+    "@fullcalendar/interaction": "^7.1.5",
     "@fullcalendar/react": "^7.1.5",
+    "temporal-polyfill": "^0.2.5",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "lucide-react": "^1.74.0",
