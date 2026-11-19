@@ -75,7 +75,7 @@ export function PlanWorkoutClient({
   async function saveSession(
     scheduledDate: string,
     workoutIds: string[],
-    source: 'auto_plan' | 'manual'
+    source: 'auto_planned' | 'manual'
   ) {
     setErrorMsg(null)
     if (workoutIds.length === 0) {
@@ -256,7 +256,7 @@ export function PlanWorkoutClient({
           <button
             type="button"
             disabled={saving || autoWorkoutIds.length === 0 || autoTotalMinutes > 75}
-            onClick={() => saveSession(autoDate, autoWorkoutIds, 'auto_plan')}
+            onClick={() => saveSession(autoDate, autoWorkoutIds, 'auto_planned')}
             className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
           >
             {saving ? 'opslaan...' : 'training inplannen'}
