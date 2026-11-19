@@ -1,9 +1,13 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/supabase/server'
-import { PlannerSessionRow } from '@/lib/chainshift'
-import { WeekPlannerClient } from '@/components/weekplannerclient'
+import {
+  WeekPlannerClient,
+  WeekSessionItem,
+} from '@/components/weekplannerclient'
 
-export default async function WeekPlannerPage() {
+const DUTCH_DAYS = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za']
+
+export default async function WeekPage() {
   const supabase = await createServerSupabase()
 
   const {
@@ -13,6 +17,32 @@ export default async function WeekPlannerPage() {
   if (!user) {
     redirect('/login')
   }
+
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  // Maandag van de huidige week berekenen
+  const dayOfWeek = now.getUTCDay()
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday)
+  )
+
+  const weekDays = Array.from({ length: 7 }, (_, idx) => {
+    const dt = new Date(
+      Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + idx)
+    )
+    const dateStr = dt.toISOString().slice(0, 10)
+    return {
+      dateStr,
+      dayLabel: DUTCH_DAYS[dt.getUTCDay()],
+      dayNumber: `${dt.getUTCDate()}/${dt.getUTCMonth() + 1}`,
+      isToday: dateStr === todayStr,
+    }
+  })
+
+  const startStr = weekDays[0].dateStr
+  const endStr = weekDays[6].dateStr
 
   const { data: sessions } = await supabase
     .from('training_sessions')
@@ -26,8 +56,6 @@ export default async function WeekPlannerPage() {
         id,
         sort_order,
         is_completed,
-        started_at,
-        ended_at,
         workouts (
           id,
           name,
@@ -37,22 +65,27 @@ export default async function WeekPlannerPage() {
       )
     `
     )
+    .gte('scheduled_date', startStr)
+    .lte('scheduled_date', endStr)
     .order('scheduled_date', { ascending: true })
 
-  const todayStr = new Date().toISOString().slice(0, 10)
-
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">weekplanner</h1>
-        <p className="text-sm text-neutral-500">
-          overzicht van je trainingen per dag, inclusief drag-and-drop met ketting-verschuiving en sessieduur.
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
+          weekoverzicht
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+          weekplanner
+        </h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          sleep een sessie naar een andere dag om je planning (en optioneel latere sessies) te verschuiven.
         </p>
       </div>
 
       <WeekPlannerClient
-        initialSessions={(sessions ?? []) as unknown as PlannerSessionRow[]}
-        todayStr={todayStr}
+        initialSessions={(sessions ?? []) as unknown as WeekSessionItem[]}
+        weekDays={weekDays}
       />
     </div>
   )

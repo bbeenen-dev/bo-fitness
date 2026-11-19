@@ -145,7 +145,6 @@ export function WorkoutLoggerClient({
     const finalStart = startedAt ?? now
     const finalEnd = endedAt ?? now
 
-    // 1. Verwijder eventuele eerdere sets van deze session_workout en schrijf de nieuwe 3 sets weg
     await supabase
       .from('workout_sets')
       .delete()
@@ -171,7 +170,6 @@ export function WorkoutLoggerClient({
       return
     }
 
-    // 2. Markeer deze workout als afgerond (groen in het overzicht)
     const { error: swErr } = await supabase
       .from('session_workouts')
       .update({
@@ -188,7 +186,6 @@ export function WorkoutLoggerClient({
       return
     }
 
-    // 3. Check of alle workouts van deze trainingssessie nu zijn afgerond
     const { data: siblingWorkouts } = await supabase
       .from('session_workouts')
       .select('is_completed')
@@ -212,52 +209,66 @@ export function WorkoutLoggerClient({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-neutral-200 bg-white p-6">
-        <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-          {muscleGroupName}
-        </span>
-        <h1 className="mt-1 text-2xl font-bold">{workoutName}</h1>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+            {muscleGroupName}
+          </span>
+          <span className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-0.5 text-xs font-medium text-zinc-300 tabular-nums">
+            {totalSets} sets
+          </span>
+        </div>
 
-        {/* Start / Gereed-knoppen en timer */}
-        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-lg bg-neutral-50 p-4">
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={Boolean(startedAt && !endedAt)}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {startedAt ? 'gestart' : 'start'}
-          </button>
+        <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-white">
+          {workoutName}
+        </h1>
 
-          <button
-            type="button"
-            onClick={handleStop}
-            disabled={!startedAt || Boolean(endedAt)}
-            className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-40"
-          >
-            gereed / stop
-          </button>
+        {/* Timer & Start / Gereed-knoppen */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={Boolean(startedAt && !endedAt)}
+              className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
+            >
+              {startedAt ? 'gestart' : 'start'}
+            </button>
 
-          <div className="ml-auto text-right">
-            <p className="text-xs text-neutral-500">tijd</p>
-            <p className="font-mono text-lg font-semibold text-neutral-900">
+            <button
+              type="button"
+              onClick={handleStop}
+              disabled={!startedAt || Boolean(endedAt)}
+              className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 disabled:opacity-35"
+            >
+              gereed / stop
+            </button>
+          </div>
+
+          <div className="text-right">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+              klok
+            </p>
+            <p className="font-mono text-xl font-bold text-emerald-400 tabular-nums">
               {formatDuration(elapsedSeconds)}
             </p>
           </div>
         </div>
 
-        {/* 3 sets met grijze prefill */}
+        {/* Sets met grijze prefill */}
         <div className="mt-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-neutral-800">sets (3 sets)</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              setregistratie
+            </h2>
             {previousSets.length > 0 && (
               <button
                 type="button"
                 onClick={applyPrefillToAll}
-                className="text-xs font-medium text-emerald-700 hover:underline"
+                className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:underline"
               >
-                vorige waarden overnemen
+                vorige waarden invullen
               </button>
             )}
           </div>
@@ -266,14 +277,19 @@ export function WorkoutLoggerClient({
             {rows.map((row, idx) => (
               <div
                 key={row.set_number}
-                className="grid grid-cols-12 items-center gap-3 rounded-lg border border-neutral-200 p-3"
+                className="grid grid-cols-12 items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-3.5"
               >
-                <span className="col-span-3 text-sm font-medium text-neutral-700">
-                  set {row.set_number}
-                </span>
+                <div className="col-span-3 flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-xs font-bold text-zinc-200 tabular-nums">
+                    {row.set_number}
+                  </span>
+                  <span className="text-xs font-medium text-zinc-400">set</span>
+                </div>
 
                 <div className="col-span-5">
-                  <label className="block text-[11px] text-neutral-500">gewicht (kg)</label>
+                  <label className="block text-[11px] font-medium text-zinc-400">
+                    gewicht (kg)
+                  </label>
                   <input
                     type="number"
                     step="0.5"
@@ -281,33 +297,38 @@ export function WorkoutLoggerClient({
                     value={row.weight_kg}
                     placeholder={row.prefillWeight || '0'}
                     onChange={(e) => updateRow(idx, 'weight_kg', e.target.value)}
-                    className="mt-0.5 w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm placeholder:text-neutral-400"
+                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-white tabular-nums placeholder:font-normal placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
 
                 <div className="col-span-4">
-                  <label className="block text-[11px] text-neutral-500">herhalingen</label>
+                  <label className="block text-[11px] font-medium text-zinc-400">
+                    herhalingen
+                  </label>
                   <input
                     type="number"
                     inputMode="numeric"
                     value={row.reps}
                     placeholder={row.prefillReps || '0'}
                     onChange={(e) => updateRow(idx, 'reps', e.target.value)}
-                    className="mt-0.5 w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm placeholder:text-neutral-400"
+                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-white tabular-nums placeholder:font-normal placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-neutral-400">
-            grijze waarden tonen je vorige keer; als je ze niet wijzigt worden deze bij opslaan overgenomen.
+
+          <p className="text-xs text-zinc-500">
+            grijze waarden tonen je vorige keer; leeg gelaten velden nemen die waarde automatisch over bij opslaan.
           </p>
         </div>
 
-        {/* Moeilijkheidsgraad: Licht / Neutraal / Zwaar */}
+        {/* Ervaren zwaarte */}
         <div className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold text-neutral-800">hoe zwaar voelde het?</h2>
-          <div className="grid grid-cols-3 gap-2">
+          <h2 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+            ervaren zwaarte
+          </h2>
+          <div className="grid grid-cols-3 gap-2.5">
             {(
               [
                 { value: 'light', label: 'licht' },
@@ -319,10 +340,10 @@ export function WorkoutLoggerClient({
                 key={opt.value}
                 type="button"
                 onClick={() => setEffort(opt.value)}
-                className={`rounded-lg border py-2.5 text-sm font-medium transition-colors ${
+                className={`rounded-xl border py-2.5 text-sm font-semibold transition-colors ${
                   effort === opt.value
-                    ? 'border-emerald-600 bg-emerald-600 text-white'
-                    : 'border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50'
+                    ? 'border-emerald-500 bg-emerald-500 text-zinc-950'
+                    : 'border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-600 hover:text-white'
                 }`}
               >
                 {opt.label}
@@ -332,18 +353,18 @@ export function WorkoutLoggerClient({
         </div>
 
         {errorMsg && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+          <div className="mt-4 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-300">
             {errorMsg}
           </div>
         )}
 
-        {/* Opslaan & terug naar trainingsoverzicht */}
-        <div className="mt-6 flex items-center gap-3">
+        {/* Opslaan & terug */}
+        <div className="mt-7 flex flex-wrap items-center gap-3">
           <button
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="flex-1 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-50 sm:flex-none"
           >
             {saving ? 'opslaan...' : 'opslaan'}
           </button>
@@ -351,7 +372,7 @@ export function WorkoutLoggerClient({
           <button
             type="button"
             onClick={() => router.push('/dashboard/volgende')}
-            className="rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
           >
             annuleren
           </button>

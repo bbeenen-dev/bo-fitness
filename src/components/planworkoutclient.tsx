@@ -72,7 +72,11 @@ export function PlanWorkoutClient({
     )
   }
 
-  async function saveSession(scheduledDate: string, workoutIds: string[], source: 'auto_plan' | 'manual') {
+  async function saveSession(
+    scheduledDate: string,
+    workoutIds: string[],
+    source: 'auto_plan' | 'manual'
+  ) {
     setErrorMsg(null)
     if (workoutIds.length === 0) {
       setErrorMsg('selecteer minimaal één workout.')
@@ -84,7 +88,9 @@ export function PlanWorkoutClient({
       0
     )
     if (totalMin > 75) {
-      setErrorMsg(`de totale duur is ${totalMin} min. maximaal 75 minuten per training is toegestaan.`)
+      setErrorMsg(
+        `de totale duur is ${totalMin} min. maximaal 75 minuten per training is toegestaan.`
+      )
       return
     }
 
@@ -131,14 +137,14 @@ export function PlanWorkoutClient({
   return (
     <div className="space-y-6">
       {/* Keuze tussen automatisch en zelf samenstellen */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2.5">
         <button
           type="button"
           onClick={() => setMode('auto')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
             mode === 'auto'
-              ? 'bg-emerald-600 text-white'
-              : 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50'
+              ? 'bg-emerald-500 text-zinc-950'
+              : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-white'
           }`}
         >
           automatisch laten plannen
@@ -147,10 +153,10 @@ export function PlanWorkoutClient({
         <button
           type="button"
           onClick={() => setMode('manual')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
             mode === 'manual'
-              ? 'bg-emerald-600 text-white'
-              : 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50'
+              ? 'bg-emerald-500 text-zinc-950'
+              : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-white'
           }`}
         >
           zelf samenstellen
@@ -158,38 +164,38 @@ export function PlanWorkoutClient({
       </div>
 
       {errorMsg && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-300">
           {errorMsg}
         </div>
       )}
 
       {/* MODUS 1: AUTOMATISCH PLANNEN */}
       {mode === 'auto' && (
-        <div className="space-y-5 rounded-xl border border-neutral-200 bg-white p-6">
+        <div className="space-y-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold">automatisch voorstel</h2>
-              <p className="text-sm text-neutral-500">
+              <h2 className="text-lg font-bold text-white">automatisch voorstel</h2>
+              <p className="text-sm text-zinc-400">
                 gebaseerd op je afgelopen 7 dagen, rustdagen en spiergroepen met voorrang.
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-neutral-700">
-                datum:{' '}
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+                <span>datum</span>
                 <input
                   type="date"
                   value={autoDate}
                   onChange={(e) => setAutoDate(e.target.value)}
-                  className="ml-1 rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm"
+                  className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm font-semibold text-white tabular-nums focus:border-emerald-500 focus:outline-none"
                 />
               </label>
 
               <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
                   autoTotalMinutes > 75
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-emerald-50 text-emerald-700'
+                    ? 'bg-red-500/20 text-red-300'
+                    : 'bg-emerald-500/15 text-emerald-400'
                 }`}
               >
                 {autoTotalMinutes} / 75 min
@@ -199,9 +205,11 @@ export function PlanWorkoutClient({
 
           {/* Uitleg waarom deze spiergroepen zijn gekozen */}
           {autoSuggestion.reasonSummary.length > 0 && (
-            <div className="rounded-lg bg-neutral-50 p-3.5 text-xs text-neutral-600">
-              <p className="mb-1 font-semibold text-neutral-800">onderbouwing:</p>
-              <ul className="list-inside list-disc space-y-0.5">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 text-xs text-zinc-300">
+              <p className="mb-1.5 font-bold uppercase tracking-wider text-emerald-400">
+                onderbouwing
+              </p>
+              <ul className="list-inside list-disc space-y-1 text-zinc-400">
                 {autoSuggestion.reasonSummary.map((line, i) => (
                   <li key={i}>{line}</li>
                 ))}
@@ -210,7 +218,7 @@ export function PlanWorkoutClient({
           )}
 
           {/* Voorgestelde workouts */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {autoWorkoutIds.map((id) => {
               const w = workoutsById.get(id)
               if (!w) return null
@@ -218,22 +226,24 @@ export function PlanWorkoutClient({
               return (
                 <div
                   key={id}
-                  className="flex items-center justify-between rounded-lg border border-neutral-200 px-4 py-3"
+                  className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3"
                 >
                   <div>
-                    <span className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
                       {mg?.name}
                     </span>
-                    <p className="font-medium text-neutral-900">{w.name}</p>
+                    <p className="font-bold text-white">{w.name}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-neutral-500">{w.estimated_duration_min} min</span>
+                    <span className="rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-300 tabular-nums">
+                      {w.estimated_duration_min} min
+                    </span>
                     <button
                       type="button"
                       onClick={() =>
                         setAutoWorkoutIds((prev) => prev.filter((item) => item !== id))
                       }
-                      className="text-xs text-neutral-400 hover:text-red-600"
+                      className="text-xs font-medium text-zinc-400 transition-colors hover:text-red-400"
                     >
                       verwijder
                     </button>
@@ -247,7 +257,7 @@ export function PlanWorkoutClient({
             type="button"
             disabled={saving || autoWorkoutIds.length === 0 || autoTotalMinutes > 75}
             onClick={() => saveSession(autoDate, autoWorkoutIds, 'auto_plan')}
-            className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
           >
             {saving ? 'opslaan...' : 'training inplannen'}
           </button>
@@ -256,15 +266,15 @@ export function PlanWorkoutClient({
 
       {/* MODUS 2: ZELF SAMENSTELLEN */}
       {mode === 'manual' && (
-        <div className="space-y-6 rounded-xl border border-neutral-200 bg-white p-6">
+        <div className="space-y-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
           {/* Stap 1: Spiergroepen kiezen */}
           <div>
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-semibold">
+                <h2 className="text-lg font-bold text-white">
                   {isMgConfirmed ? 'gekozen spiergroepen' : '1. selecteer spiergroepen'}
                 </h2>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-zinc-400">
                   {isMgConfirmed
                     ? 'kies hieronder de gewenste workouts per spiergroep.'
                     : 'klik de gewenste spiergroepen aan (worden groen) en klik op selecteren.'}
@@ -278,7 +288,7 @@ export function PlanWorkoutClient({
                     setIsMgConfirmed(false)
                     setChosenManualWorkoutIds([])
                   }}
-                  className="text-xs font-medium text-neutral-600 underline hover:text-neutral-900"
+                  className="text-xs font-semibold text-emerald-400 underline hover:text-emerald-300"
                 >
                   spiergroepen wijzigen
                 </button>
@@ -296,10 +306,10 @@ export function PlanWorkoutClient({
                       type="button"
                       disabled={isMgConfirmed}
                       onClick={() => toggleMuscleGroup(mg.id)}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                      className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
                         isSelected
-                          ? 'border-emerald-600 bg-emerald-600 text-white'
-                          : 'border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50'
+                          ? 'border-emerald-500 bg-emerald-500 text-zinc-950'
+                          : 'border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-600 hover:text-white'
                       }`}
                     >
                       {mg.name}
@@ -313,7 +323,7 @@ export function PlanWorkoutClient({
                 type="button"
                 disabled={selectedMgIds.length === 0}
                 onClick={() => setIsMgConfirmed(true)}
-                className="mt-4 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-40"
+                className="mt-4 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
               >
                 selecteren
               </button>
@@ -322,26 +332,26 @@ export function PlanWorkoutClient({
 
           {/* Stap 2: Workouts per geselecteerde spiergroep kiezen */}
           {isMgConfirmed && (
-            <div className="space-y-5 border-t border-neutral-200 pt-5">
+            <div className="space-y-5 border-t border-zinc-800 pt-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold">2. kies workouts &amp; datum</h3>
+                <h3 className="font-bold text-white">2. kies workouts &amp; datum</h3>
 
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-medium text-neutral-700">
-                    datum:{' '}
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+                    <span>datum</span>
                     <input
                       type="date"
                       value={manualDate}
                       onChange={(e) => setManualDate(e.target.value)}
-                      className="ml-1 rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm"
+                      className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm font-semibold text-white tabular-nums focus:border-emerald-500 focus:outline-none"
                     />
                   </label>
 
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
                       manualTotalMinutes > 75
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-emerald-50 text-emerald-700'
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-emerald-500/15 text-emerald-400'
                     }`}
                   >
                     {manualTotalMinutes} / 75 min
@@ -355,9 +365,14 @@ export function PlanWorkoutClient({
                   .map((mg) => {
                     const mgWorkouts = workouts.filter((w) => w.muscle_group_id === mg.id)
                     return (
-                      <div key={mg.id} className="rounded-lg border border-neutral-200 p-4">
-                        <p className="mb-2.5 text-sm font-semibold text-emerald-700">{mg.name}</p>
-                        <div className="grid gap-2 sm:grid-cols-2">
+                      <div
+                        key={mg.id}
+                        className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4"
+                      >
+                        <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
+                          {mg.name}
+                        </p>
+                        <div className="grid gap-2.5 sm:grid-cols-2">
                           {mgWorkouts.map((w) => {
                             const checked = chosenManualWorkoutIds.includes(w.id)
                             return (
@@ -365,14 +380,14 @@ export function PlanWorkoutClient({
                                 key={w.id}
                                 type="button"
                                 onClick={() => toggleManualWorkout(w.id)}
-                                className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 text-left text-sm transition-colors ${
+                                className={`flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-sm transition-colors ${
                                   checked
-                                    ? 'border-emerald-600 bg-emerald-50 font-medium text-emerald-900'
-                                    : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50'
+                                    ? 'border-emerald-500 bg-emerald-950/45 font-semibold text-white'
+                                    : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:text-white'
                                 }`}
                               >
                                 <span>{w.name}</span>
-                                <span className="text-xs text-neutral-500">
+                                <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 tabular-nums">
                                   {w.estimated_duration_min} min
                                 </span>
                               </button>
@@ -386,9 +401,11 @@ export function PlanWorkoutClient({
 
               <button
                 type="button"
-                disabled={saving || chosenManualWorkoutIds.length === 0 || manualTotalMinutes > 75}
+                disabled={
+                  saving || chosenManualWorkoutIds.length === 0 || manualTotalMinutes > 75
+                }
                 onClick={() => saveSession(manualDate, chosenManualWorkoutIds, 'manual')}
-                className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
               >
                 {saving ? 'opslaan...' : 'training opslaan in weekplanner'}
               </button>

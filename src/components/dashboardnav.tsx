@@ -5,13 +5,13 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
-  { href: '/dashboard/volgende', label: 'eerst volgende training' },
-  { href: '/dashboard/plannen', label: 'training plannen' },
-  { href: '/dashboard/week', label: 'weekplanner' },
-  { href: '/dashboard', label: 'statistieken', exact: true },
+  { href: '/dashboard/volgende', label: 'volgende' },
+  { href: '/dashboard/plannen', label: 'plannen' },
+  { href: '/dashboard/week', label: 'week' },
+  { href: '/dashboard', label: 'statistieken' },
 ]
 
-export function DashboardNav({ userEmail }: { userEmail?: string }) {
+export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -23,27 +23,32 @@ export function DashboardNav({ userEmail }: { userEmail?: string }) {
   }
 
   return (
-    <header className="border-b border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-2 text-sm font-bold tracking-tight text-neutral-900">
-            bo-fitness
-          </span>
+    <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-6">
+          <Link
+            href="/dashboard/volgende"
+            className="flex items-center gap-2 text-base font-extrabold tracking-tight text-white"
+          >
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            <span>BO-FITNESS</span>
+          </Link>
 
-          <nav aria-label="hoofdmenu" className="flex flex-wrap items-center gap-1.5">
+          <nav className="flex flex-wrap items-center gap-1 sm:gap-1.5">
             {navItems.map((item) => {
-              const isActive = item.exact
-                ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(`${item.href}/`)
+              const isActive =
+                item.href === '/dashboard'
+                  ? pathname === '/dashboard'
+                  : pathname?.startsWith(item.href)
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
                     isActive
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                      ? 'bg-emerald-500 text-zinc-950'
+                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -53,12 +58,16 @@ export function DashboardNav({ userEmail }: { userEmail?: string }) {
           </nav>
         </div>
 
-        <div className="flex items-center justify-between gap-3 text-xs text-neutral-500 md:justify-end">
-          {userEmail && <span className="truncate">{userEmail}</span>}
+        <div className="flex items-center gap-3">
+          {userEmail && (
+            <span className="hidden text-xs text-zinc-400 md:inline">
+              {userEmail}
+            </span>
+          )}
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-md border border-neutral-300 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700 hover:text-white"
           >
             uitloggen
           </button>
