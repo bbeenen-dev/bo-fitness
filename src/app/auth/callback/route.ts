@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   
   // Stuur standaard door naar je workouts dashboard in plaats van '/'
-  const next = searchParams.get('next') ?? '/dashboard/workouts'
+  const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
     const supabase = await createServerSupabase()
