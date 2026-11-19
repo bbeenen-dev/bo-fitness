@@ -62,7 +62,7 @@ export async function createWorkout(formData: FormData) {
     }
   }
 
-  revalidatePath('/dashboard/workouts')
-  revalidatePath('/dashboard/kalender')
-  redirect('/dashboard/workouts')
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard')
+  redirect('/dashboard')
 }
