@@ -52,10 +52,8 @@ export default async function StatistiekenPage() {
     <div className="mx-auto max-w-4xl space-y-5 px-4 py-5 pb-24 sm:px-6">
       <div className="flex items-center justify-between gap-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-emerald-400">
-            <BarChart3 className="h-3.5 w-3.5" />
-          </div>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white">
+          
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-green">
             statistieken laatste 5 weken
           </h1>
           
