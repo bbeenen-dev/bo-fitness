@@ -54,23 +54,13 @@ export default async function StatistiekenPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-emerald-400">
             <BarChart3 className="h-3.5 w-3.5" />
-            <span>analyse • laatste 5 weken</span>
           </div>
           <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white">
-            statistieken
+            statistieken laatste 5 weken
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            weekvolume in kilo&apos;s en workout-progressie per spiergroep.
-          </p>
+          
         </div>
-
-        <Link
-          href="/dashboard"
-          className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-800 px-3.5 py-2.5 text-xs font-bold text-zinc-200 transition-colors hover:border-zinc-600"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>overzicht</span>
-        </Link>
+       
       </div>
 
       <StatsDashboardClient stats={stats} />

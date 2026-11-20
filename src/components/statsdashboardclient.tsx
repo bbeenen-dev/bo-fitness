@@ -473,12 +473,7 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
   return (
     <div className="space-y-4 pb-8">
       {/* Alleen de groene header voor analyse afgelopen 5 weken */}
-      <div className="rounded-2xl bg-emerald-600 px-4 py-3">
-        <h1 className="text-lg font-extrabold tracking-tight text-white">
-          Analyse afgelopen 5 weken
-        </h1>
-      </div>
-
+      
       {/* Blok: activiteit in kilo's per week */}
       <section className="space-y-2 rounded-3xl border border-zinc-800 bg-zinc-900 p-4">
         <h2 className="text-sm font-bold text-white">
