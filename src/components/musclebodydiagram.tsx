@@ -31,50 +31,132 @@ export function MuscleBodyDiagram({ activeMuscleGroup, compact = false }: Props)
   return (
     <div
       className={`flex items-center justify-center rounded-2xl border border-zinc-800/90 bg-zinc-950/90 ${
-        compact ? 'h-24 w-20 p-1.5' : 'h-32 w-28 p-2'
+        compact ? 'h-24 w-36 p-1.5' : 'h-36 w-52 p-2'
       }`}
       aria-hidden="true"
     >
-      <svg viewBox="0 0 120 180" className="h-full w-full">
-        {/* Hoofd */}
-        <circle cx="60" cy="20" r="11" className="fill-zinc-800 stroke-zinc-700" strokeWidth="2" />
-        {/* Nek & romp */}
-        <path
-          d="M54 31 H66 L74 44 L70 98 H50 L46 44 Z"
-          className={fillClass(isBack || isCore)}
-          strokeWidth="2"
-        />
-        {/* Borst */}
-        <path
-          d="M47 45 H60 V66 H49 Z M60 45 H73 L71 66 H60 Z"
-          className={fillClass(isChest)}
-          strokeWidth="1.5"
-        />
-        {/* Schouders */}
-        <circle cx="43" cy="47" r="7" className={fillClass(isShoulders)} strokeWidth="1.5" />
-        <circle cx="77" cy="47" r="7" className={fillClass(isShoulders)} strokeWidth="1.5" />
-        {/* Armen */}
-        <path
-          d="M36 52 L28 92 L35 94 L43 56 Z"
-          className={fillClass(isArms)}
-          strokeWidth="1.5"
-        />
-        <path
-          d="M84 52 L92 92 L85 94 L77 56 Z"
-          className={fillClass(isArms)}
-          strokeWidth="1.5"
-        />
-        {/* Benen */}
-        <path
-          d="M50 100 H59 L57 166 H47 Z"
-          className={fillClass(isLegs)}
-          strokeWidth="1.5"
-        />
-        <path
-          d="M61 100 H70 L73 166 H63 Z"
-          className={fillClass(isLegs)}
-          strokeWidth="1.5"
-        />
+      <svg viewBox="0 0 220 180" className="h-full w-full">
+        {/* ==================== LINKS: VOORKANT ==================== */}
+        <g id="front">
+          {/* Hoofd */}
+          <circle
+            cx="55"
+            cy="20"
+            r="10.5"
+            className="fill-zinc-800 stroke-zinc-700"
+            strokeWidth="2"
+          />
+          {/* Nek & romp */}
+          <path
+            d="M49 30 H61 L69 43 L65 98 H45 L41 43 Z"
+            className={fillClass(isCore)}
+            strokeWidth="2"
+          />
+          {/* Borst */}
+          <path
+            d="M42 44 H55 V65 H44 Z M55 44 H68 L66 65 H55 Z"
+            className={fillClass(isChest)}
+            strokeWidth="1.5"
+          />
+          {/* Schouders */}
+          <circle
+            cx="38"
+            cy="46"
+            r="6.5"
+            className={fillClass(isShoulders)}
+            strokeWidth="1.5"
+          />
+          <circle
+            cx="72"
+            cy="46"
+            r="6.5"
+            className={fillClass(isShoulders)}
+            strokeWidth="1.5"
+          />
+          {/* Armen */}
+          <path
+            d="M31 51 L23 92 L30 94 L38 55 Z"
+            className={fillClass(isArms)}
+            strokeWidth="1.5"
+          />
+          <path
+            d="M79 51 L87 92 L80 94 L72 55 Z"
+            className={fillClass(isArms)}
+            strokeWidth="1.5"
+          />
+          {/* Benen voorkant */}
+          <path
+            d="M45 100 H54 L52 166 H42 Z"
+            className={fillClass(isLegs)}
+            strokeWidth="1.5"
+          />
+          <path
+            d="M56 100 H65 L68 166 H58 Z"
+            className={fillClass(isLegs)}
+            strokeWidth="1.5"
+          />
+        </g>
+
+        {/* ==================== RECHTS: ACHTERKANT ==================== */}
+        <g id="back">
+          {/* Hoofd */}
+          <circle
+            cx="165"
+            cy="20"
+            r="10.5"
+            className="fill-zinc-800 stroke-zinc-700"
+            strokeWidth="2"
+          />
+          {/* Nek & rug */}
+          <path
+            d="M159 30 H171 L179 43 L175 98 H155 L151 43 Z"
+            className={fillClass(isBack)}
+            strokeWidth="2"
+          />
+          {/* Schouders achterkant */}
+          <circle
+            cx="148"
+            cy="46"
+            r="6.5"
+            className={fillClass(isShoulders)}
+            strokeWidth="1.5"
+          />
+          <circle
+            cx="182"
+            cy="46"
+            r="6.5"
+            className={fillClass(isShoulders)}
+            strokeWidth="1.5"
+          />
+          {/* Armen achterkant */}
+          <path
+            d="M141 51 L133 92 L140 94 L148 55 Z"
+            className={fillClass(isArms)}
+            strokeWidth="1.5"
+          />
+          <path
+            d="M189 51 L197 92 L190 94 L182 55 Z"
+            className={fillClass(isArms)}
+            strokeWidth="1.5"
+          />
+          {/* Billen */}
+          <path
+            d="M155 84 H165 V102 H154 Z M165 84 H175 L176 102 H165 Z"
+            className={fillClass(isLegs)}
+            strokeWidth="1.5"
+          />
+          {/* Benen achterkant */}
+          <path
+            d="M155 102 H164 L162 166 H152 Z"
+            className={fillClass(isLegs)}
+            strokeWidth="1.5"
+          />
+          <path
+            d="M166 102 H175 L178 166 H168 Z"
+            className={fillClass(isLegs)}
+            strokeWidth="1.5"
+          />
+        </g>
       </svg>
     </div>
   )
