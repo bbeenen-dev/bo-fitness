@@ -113,7 +113,7 @@ export default async function DashboardHomePage() {
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
                 <Dumbbell className="h-4 w-4" />
-                <span>1. training vandaag</span>
+                <span>Training vandaag</span>
               </div>
               <h2 className="text-xl font-bold text-white">
                 {firstWorkout?.workouts?.name ?? 'training van vandaag starten'}
@@ -134,7 +134,7 @@ export default async function DashboardHomePage() {
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
                 <Dumbbell className="h-4 w-4 text-emerald-400" />
-                <span>1. training vandaag</span>
+                <span>Training vandaag</span>
               </div>
               <h2 className="mt-1.5 text-lg font-bold text-white">
                 vandaag geen training
@@ -162,7 +162,7 @@ export default async function DashboardHomePage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
               <CalendarDays className="h-4 w-4" />
-              <span>2. training plannen</span>
+              <span>Training plannen</span>
             </div>
             <h2 className="text-lg font-bold text-white">
               weekplanning huidige week
@@ -186,7 +186,7 @@ export default async function DashboardHomePage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
               <History className="h-4 w-4" />
-              <span>3. trainingshistorie</span>
+              <span>Trainingshistorie</span>
             </div>
             <h2 className="text-lg font-bold text-white">
               laatste trainingen &amp; score
@@ -210,7 +210,7 @@ export default async function DashboardHomePage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
               <Library className="h-4 w-4" />
-              <span>4. trainingen beheer</span>
+              <span>Beheer Workouts</span>
             </div>
             <h2 className="text-lg font-bold text-white">
               spiergroepen &amp; workout-bibliotheek
