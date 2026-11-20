@@ -2,70 +2,131 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Sparkles, SlidersHorizontal, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import {
-  AutoPlanSuggestion,
-  MuscleGroupRow,
-  WorkoutRow,
-} from '@/lib/autoplanner'
+import { generateAutoPlan } from '@/lib/autoplanner'
+import { MuscleBodyDiagram } from '@/components/musclebodydiagram'
+
+type MuscleGroup = {
+  id: string
+  name: string
+  allows_frequent_repeat: boolean
+  sort_order: number
+}
+
+type WorkoutItem = {
+  id: string
+  name: string
+  estimated_duration_min: number
+  estimated_kcal: number | null
+  default_sets: number
+  muscle_group_id: string
+  muscle_groups: { id: string; name: string } | null
+}
+
+type RecentSession = {
+  id: string
+  scheduled_date: string
+  status: string
+  session_workouts: {
+    workout_id: string
+    workouts: { muscle_group_id: string } | null
+  }[]
+}
 
 type Props = {
-  userId: string
-  muscleGroups: MuscleGroupRow[]
-  workouts: WorkoutRow[]
-  autoSuggestion: AutoPlanSuggestion
+  todayStr: string
+  initialDate: string
+  muscleGroups: MuscleGroup[]
+  workouts: WorkoutItem[]
+  recentSessions: RecentSession[]
 }
 
 export function PlanWorkoutClient({
-  userId,
+  todayStr,
+  initialDate,
   muscleGroups,
   workouts,
-  autoSuggestion,
+  recentSessions,
 }: Props) {
   const router = useRouter()
   const [mode, setMode] = useState<'auto' | 'manual'>('auto')
-  const [saving, setSaving] = useState(false)
+
+  // Automatisch plannen state
+  const [autoDate, setAutoDate] = useState<string>(initialDate)
+
+  // Zelf samenstellen state
+  const [manualDate, setManualDate] = useState<string>(initialDate)
+  const [selectedMuscleId, setSelectedMuscleId] = useState<string>(
+    muscleGroups[0]?.id ?? ''
+  )
+  const [selectedWorkoutIds, setSelectedWorkoutIds] = useState<string[]>([])
+
+  const [saving, setSaving] = useState<boolean>(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // --- State voor AUTOMATISCH ---
-  const [autoDate, setAutoDate] = useState(autoSuggestion.suggestedDate)
-  const [autoWorkoutIds, setAutoWorkoutIds] = useState<string[]>(
-    autoSuggestion.workouts.map((w) => w.id)
+  const autoSuggestion = useMemo(() => {
+    const plannerSessions = recentSessions.map((s) => ({
+      id: s.id,
+      scheduled_date: s.scheduled_date,
+      status: s.status,
+      session_workouts: (s.session_workouts ?? []).map((sw) => ({
+        workout_id: sw.workout_id,
+        workouts: sw.workouts?.muscle_group_id
+          ? { id: sw.workout_id, muscle_group_id: sw.workouts.muscle_group_id }
+          : null,
+      })),
+    }))
+
+    return generateAutoPlan({
+      todayStr,
+      muscleGroups,
+      workouts,
+      sessions: plannerSessions,
+    })
+  }, [todayStr, muscleGroups, workouts, recentSessions])
+
+  const autoWorkouts = useMemo(() => {
+    return autoSuggestion.workouts
+      .map((aw) => workouts.find((w) => w.id === aw.id))
+      .filter((w): w is WorkoutItem => Boolean(w))
+  }, [autoSuggestion, workouts])
+
+  const autoWorkoutIds = useMemo(
+    () => autoWorkouts.map((w) => w.id),
+    [autoWorkouts]
   )
 
-  // --- State voor ZELF SAMENSTELLEN ---
-  const [selectedMgIds, setSelectedMgIds] = useState<string[]>([])
-  const [isMgConfirmed, setIsMgConfirmed] = useState(false)
-  const [chosenManualWorkoutIds, setChosenManualWorkoutIds] = useState<string[]>([])
-  const [manualDate, setManualDate] = useState(autoSuggestion.suggestedDate)
-
-  const workoutsById = useMemo(
-    () => new Map(workouts.map((w) => [w.id, w])),
-    [workouts]
-  )
-  const mgById = useMemo(
-    () => new Map(muscleGroups.map((m) => [m.id, m])),
-    [muscleGroups]
+  const autoTotalMinutes = useMemo(
+    () =>
+      autoWorkouts.reduce(
+        (sum, w) => sum + (w.estimated_duration_min ?? 0),
+        0
+      ),
+    [autoWorkouts]
   )
 
-  const autoTotalMinutes = autoWorkoutIds.reduce(
-    (sum, id) => sum + (workoutsById.get(id)?.estimated_duration_min ?? 0),
-    0
-  )
+  const activeMuscleGroupName = useMemo(() => {
+    if (mode === 'auto') {
+      return autoWorkouts[0]?.muscle_groups?.name ?? null
+    }
+    return muscleGroups.find((m) => m.id === selectedMuscleId)?.name ?? null
+  }, [mode, autoWorkouts, muscleGroups, selectedMuscleId])
 
-  const manualTotalMinutes = chosenManualWorkoutIds.reduce(
-    (sum, id) => sum + (workoutsById.get(id)?.estimated_duration_min ?? 0),
-    0
-  )
+  const filteredWorkouts = useMemo(() => {
+    if (!selectedMuscleId) return workouts
+    return workouts.filter((w) => w.muscle_group_id === selectedMuscleId)
+  }, [workouts, selectedMuscleId])
 
-  function toggleMuscleGroup(mgId: string) {
-    setSelectedMgIds((prev) =>
-      prev.includes(mgId) ? prev.filter((id) => id !== mgId) : [...prev, mgId]
-    )
-  }
+  const manualTotalMinutes = useMemo(() => {
+    return selectedWorkoutIds.reduce((sum, id) => {
+      const found = workouts.find((w) => w.id === id)
+      return sum + (found?.estimated_duration_min ?? 0)
+    }, 0)
+  }, [selectedWorkoutIds, workouts])
 
-  function toggleManualWorkout(workoutId: string) {
-    setChosenManualWorkoutIds((prev) =>
+  function toggleWorkout(workoutId: string) {
+    setSelectedWorkoutIds((prev) =>
       prev.includes(workoutId)
         ? prev.filter((id) => id !== workoutId)
         : [...prev, workoutId]
@@ -77,341 +138,281 @@ export function PlanWorkoutClient({
     workoutIds: string[],
     source: 'auto_planned' | 'manual'
   ) {
-    setErrorMsg(null)
-    if (workoutIds.length === 0) {
-      setErrorMsg('selecteer minimaal één workout.')
-      return
-    }
-
-    const totalMin = workoutIds.reduce(
-      (sum, id) => sum + (workoutsById.get(id)?.estimated_duration_min ?? 0),
-      0
-    )
-    if (totalMin > 75) {
-      setErrorMsg(
-        `de totale duur is ${totalMin} min. maximaal 75 minuten per training is toegestaan.`
-      )
-      return
-    }
+    if (!scheduledDate || workoutIds.length === 0) return
 
     setSaving(true)
-    const supabase = createClient()
+    setErrorMsg(null)
 
-    const { data: session, error: sessionErr } = await supabase
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      setSaving(false)
+      setErrorMsg('je bent niet ingelogd.')
+      return
+    }
+
+    const totalDuration = workoutIds.reduce((sum, id) => {
+      const w = workouts.find((item) => item.id === id)
+      return sum + (w?.estimated_duration_min ?? 0)
+    }, 0)
+
+    const { data: createdSession, error: sessionError } = await supabase
       .from('training_sessions')
       .insert({
-        user_id: userId,
+        user_id: user.id,
         scheduled_date: scheduledDate,
         status: 'planned',
         source,
+        total_duration_min: totalDuration,
       })
       .select('id')
       .single()
 
-    if (sessionErr || !session) {
+    if (sessionError || !createdSession) {
       setSaving(false)
-      setErrorMsg(sessionErr?.message ?? 'kon training niet opslaan.')
+      setErrorMsg(sessionError?.message ?? 'kon trainingssessie niet opslaan.')
       return
     }
 
-    const rows = workoutIds.map((workoutId, idx) => ({
-      training_session_id: session.id,
-      user_id: userId,
+    const rows = workoutIds.map((workoutId, index) => ({
+      user_id: user.id,
+      session_id: createdSession.id,
       workout_id: workoutId,
-      sort_order: idx + 1,
+      sort_order: index + 1,
       is_completed: false,
     }))
 
-    const { error: swErr } = await supabase.from('session_workouts').insert(rows)
+    const { error: swError } = await supabase
+      .from('session_workouts')
+      .insert(rows)
 
     setSaving(false)
-    if (swErr) {
-      setErrorMsg(swErr.message)
+
+    if (swError) {
+      setErrorMsg(swError.message)
       return
     }
 
-    router.push('/dashboard/volgende')
+    router.push('/dashboard/week')
     router.refresh()
   }
 
   return (
-    <div className="space-y-6">
-      {/* Keuze tussen automatisch en zelf samenstellen */}
-      <div className="flex flex-wrap gap-2.5">
+    <div className="space-y-5">
+      {/* Modus-schakelaar */}
+      <div className="grid grid-cols-2 gap-2.5 rounded-3xl border border-zinc-800 bg-zinc-900 p-2">
         <button
           type="button"
           onClick={() => setMode('auto')}
-          className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+          className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl text-sm font-bold transition-all ${
             mode === 'auto'
-              ? 'bg-emerald-500 text-zinc-950'
-              : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-white'
+              ? 'bg-emerald-500 text-zinc-950 shadow'
+              : 'text-zinc-300 hover:bg-zinc-800'
           }`}
         >
-          automatisch laten plannen
+          <Sparkles className="h-4 w-4" />
+          <span>automatisch</span>
         </button>
 
         <button
           type="button"
           onClick={() => setMode('manual')}
-          className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+          className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl text-sm font-bold transition-all ${
             mode === 'manual'
-              ? 'bg-emerald-500 text-zinc-950'
-              : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-white'
+              ? 'bg-emerald-500 text-zinc-950 shadow'
+              : 'text-zinc-300 hover:bg-zinc-800'
           }`}
         >
-          zelf samenstellen
+          <SlidersHorizontal className="h-4 w-4" />
+          <span>zelf samenstellen</span>
         </button>
       </div>
 
       {errorMsg && (
-        <div className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+        <div className="rounded-2xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm font-medium text-red-200">
           {errorMsg}
         </div>
       )}
 
-      {/* MODUS 1: AUTOMATISCH PLANNEN */}
-      {mode === 'auto' && (
-        <div className="space-y-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+      {mode === 'auto' ? (
+        <section className="space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold text-white">automatisch voorstel</h2>
-              <p className="text-sm text-zinc-400">
-                gebaseerd op je afgelopen 7 dagen, rustdagen en spiergroepen met voorrang.
+              <h2 className="text-lg font-bold text-white">
+                slim voorstel op basis van je historie
+              </h2>
+              <p className="mt-0.5 text-sm text-zinc-400">
+                maximaal 75 minuten • gericht op spiergroepen die het langst geleden zijn getraind.
               </p>
             </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
-                <span>datum</span>
-                <input
-                  type="date"
-                  value={autoDate}
-                  onChange={(e) => setAutoDate(e.target.value)}
-                  className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm font-semibold text-white tabular-nums focus:border-emerald-500 focus:outline-none"
-                />
-              </label>
-
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
-                  autoTotalMinutes > 75
-                    ? 'bg-red-500/20 text-red-300'
-                    : 'bg-emerald-500/15 text-emerald-400'
-                }`}
-              >
-                {autoTotalMinutes} / 75 min
-              </span>
-            </div>
+            <MuscleBodyDiagram activeMuscleGroup={activeMuscleGroupName} compact />
           </div>
 
-          {/* Uitleg waarom deze spiergroepen zijn gekozen */}
-          {autoSuggestion.reasonSummary.length > 0 && (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 text-xs text-zinc-300">
-              <p className="mb-1.5 font-bold uppercase tracking-wider text-emerald-400">
-                onderbouwing
-              </p>
-              <ul className="list-inside list-disc space-y-1 text-zinc-400">
-                {autoSuggestion.reasonSummary.map((line, i) => (
-                  <li key={i}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <label className="block space-y-1.5">
+            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <Calendar className="h-3.5 w-3.5 text-emerald-400" />
+              <span>datum</span>
+            </span>
+            <input
+              type="date"
+              value={autoDate}
+              onChange={(e) => setAutoDate(e.target.value)}
+              className="min-h-12 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 text-sm font-semibold text-white tabular-nums focus:border-emerald-400 focus:outline-none"
+            />
+          </label>
 
-          {/* Voorgestelde workouts */}
           <div className="space-y-2.5">
-            {autoWorkoutIds.map((id) => {
-              const w = workoutsById.get(id)
-              if (!w) return null
-              const mg = mgById.get(w.muscle_group_id)
-              return (
+            {autoWorkouts.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/60 p-4 text-sm text-zinc-400">
+                geen workouts beschikbaar om automatisch een voorstel te maken.
+              </p>
+            ) : (
+              autoWorkouts.map((w) => (
                 <div
-                  key={id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3"
+                  key={w.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3"
                 >
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-                      {mg?.name}
-                    </span>
-                    <p className="font-bold text-white">{w.name}</p>
+                    <p className="text-sm font-bold text-white">{w.name}</p>
+                    <p className="text-xs text-emerald-400">
+                      {w.muscle_groups?.name ?? 'spiergroep'}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-300 tabular-nums">
-                      {w.estimated_duration_min} min
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAutoWorkoutIds((prev) => prev.filter((item) => item !== id))
-                      }
-                      className="text-xs font-medium text-zinc-400 transition-colors hover:text-red-400"
-                    >
-                      verwijder
-                    </button>
-                  </div>
+                  <span className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-200 tabular-nums">
+                    {w.estimated_duration_min} min
+                  </span>
                 </div>
-              )
-            })}
+              ))
+            )}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
+            <span className="text-zinc-400">geschatte totale duur</span>
+            <span
+              className={`font-extrabold tabular-nums ${
+                autoTotalMinutes > 75 ? 'text-red-400' : 'text-emerald-400'
+              }`}
+            >
+              {autoTotalMinutes} / 75 min
+            </span>
           </div>
 
           <button
             type="button"
-            disabled={saving || autoWorkoutIds.length === 0 || autoTotalMinutes > 75}
-            onClick={() => saveSession(autoDate, autoWorkoutIds, 'auto_planned')}
-            className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
+            disabled={
+              saving ||
+              !autoDate ||
+              autoWorkoutIds.length === 0 ||
+              autoTotalMinutes > 75
+            }
+            onClick={() => void saveSession(autoDate, autoWorkoutIds, 'auto_planned')}
+            className="min-h-12 w-full rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-zinc-950 transition-all active:scale-[0.99] hover:bg-emerald-400 disabled:opacity-40"
           >
-            {saving ? 'opslaan...' : 'training inplannen'}
+            {saving ? 'training inplannen...' : 'training inplannen'}
           </button>
-        </div>
-      )}
-
-      {/* MODUS 2: ZELF SAMENSTELLEN */}
-      {mode === 'manual' && (
-        <div className="space-y-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
-          {/* Stap 1: Spiergroepen kiezen */}
-          <div>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="text-lg font-bold text-white">
-                  {isMgConfirmed ? 'gekozen spiergroepen' : '1. selecteer spiergroepen'}
-                </h2>
-                <p className="text-sm text-zinc-400">
-                  {isMgConfirmed
-                    ? 'kies hieronder de gewenste workouts per spiergroep.'
-                    : 'klik de gewenste spiergroepen aan (worden groen) en klik op selecteren.'}
-                </p>
-              </div>
-
-              {isMgConfirmed && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMgConfirmed(false)
-                    setChosenManualWorkoutIds([])
-                  }}
-                  className="text-xs font-semibold text-emerald-400 underline hover:text-emerald-300"
-                >
-                  spiergroepen wijzigen
-                </button>
-              )}
+        </section>
+      ) : (
+        <section className="space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-white">
+                zelf training samenstellen
+              </h2>
+              <p className="mt-0.5 text-sm text-zinc-400">
+                kies een datum, spiergroep en één of meerdere workouts.
+              </p>
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              {muscleGroups
-                .filter((mg) => !isMgConfirmed || selectedMgIds.includes(mg.id))
-                .map((mg) => {
-                  const isSelected = selectedMgIds.includes(mg.id)
-                  return (
-                    <button
-                      key={mg.id}
-                      type="button"
-                      disabled={isMgConfirmed}
-                      onClick={() => toggleMuscleGroup(mg.id)}
-                      className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
-                        isSelected
-                          ? 'border-emerald-500 bg-emerald-500 text-zinc-950'
-                          : 'border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-600 hover:text-white'
-                      }`}
-                    >
-                      {mg.name}
-                    </button>
-                  )
-                })}
-            </div>
-
-            {!isMgConfirmed && (
-              <button
-                type="button"
-                disabled={selectedMgIds.length === 0}
-                onClick={() => setIsMgConfirmed(true)}
-                className="mt-4 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
-              >
-                selecteren
-              </button>
-            )}
+            <MuscleBodyDiagram activeMuscleGroup={activeMuscleGroupName} compact />
           </div>
 
-          {/* Stap 2: Workouts per geselecteerde spiergroep kiezen */}
-          {isMgConfirmed && (
-            <div className="space-y-5 border-t border-zinc-800 pt-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-bold text-white">2. kies workouts &amp; datum</h3>
+          <label className="block space-y-1.5">
+            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <Calendar className="h-3.5 w-3.5 text-emerald-400" />
+              <span>datum</span>
+            </span>
+            <input
+              type="date"
+              value={manualDate}
+              onChange={(e) => setManualDate(e.target.value)}
+              className="min-h-12 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 text-sm font-semibold text-white tabular-nums focus:border-emerald-400 focus:outline-none"
+            />
+          </label>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
-                    <span>datum</span>
-                    <input
-                      type="date"
-                      value={manualDate}
-                      onChange={(e) => setManualDate(e.target.value)}
-                      className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm font-semibold text-white tabular-nums focus:border-emerald-500 focus:outline-none"
-                    />
-                  </label>
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
-                      manualTotalMinutes > 75
-                        ? 'bg-red-500/20 text-red-300'
-                        : 'bg-emerald-500/15 text-emerald-400'
+          {/* Spiergroepen selecteren */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              1. kies spiergroep
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {muscleGroups.map((mg) => {
+                const active = mg.id === selectedMuscleId
+                return (
+                  <button
+                    key={mg.id}
+                    type="button"
+                    onClick={() => setSelectedMuscleId(mg.id)}
+                    className={`min-h-11 rounded-2xl border px-4 py-2 text-xs font-bold transition-all ${
+                      active
+                        ? 'border-emerald-400 bg-emerald-500 text-zinc-950'
+                        : 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600'
                     }`}
                   >
-                    {manualTotalMinutes} / 75 min
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {muscleGroups
-                  .filter((mg) => selectedMgIds.includes(mg.id))
-                  .map((mg) => {
-                    const mgWorkouts = workouts.filter((w) => w.muscle_group_id === mg.id)
-                    return (
-                      <div
-                        key={mg.id}
-                        className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4"
-                      >
-                        <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
-                          {mg.name}
-                        </p>
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                          {mgWorkouts.map((w) => {
-                            const checked = chosenManualWorkoutIds.includes(w.id)
-                            return (
-                              <button
-                                key={w.id}
-                                type="button"
-                                onClick={() => toggleManualWorkout(w.id)}
-                                className={`flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left text-sm transition-colors ${
-                                  checked
-                                    ? 'border-emerald-500 bg-emerald-950/45 font-semibold text-white'
-                                    : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:text-white'
-                                }`}
-                              >
-                                <span>{w.name}</span>
-                                <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 tabular-nums">
-                                  {w.estimated_duration_min} min
-                                </span>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-              </div>
-
-              <button
-                type="button"
-                disabled={
-                  saving || chosenManualWorkoutIds.length === 0 || manualTotalMinutes > 75
-                }
-                onClick={() => saveSession(manualDate, chosenManualWorkoutIds, 'manual')}
-                className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-40"
-              >
-                {saving ? 'opslaan...' : 'training opslaan in weekplanner'}
-              </button>
+                    {mg.name}
+                  </button>
+                )
+              })}
             </div>
-          )}
-        </div>
+          </div>
+
+          {/* Workouts binnen gekozen spiergroep */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              2. selecteer workouts ({selectedWorkoutIds.length} gekozen)
+            </p>
+            <div className="space-y-2">
+              {filteredWorkouts.map((w) => {
+                const checked = selectedWorkoutIds.includes(w.id)
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => toggleWorkout(w.id)}
+                    className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
+                      checked
+                        ? 'border-emerald-400 bg-emerald-950/40 text-white'
+                        : 'border-zinc-800 bg-zinc-950 text-zinc-200 hover:border-zinc-700'
+                    }`}
+                  >
+                    <span className="text-sm font-bold">{w.name}</span>
+                    <span className="rounded-xl bg-zinc-900 px-3 py-1 text-xs font-semibold text-emerald-400 tabular-nums">
+                      {checked ? '✓ ' : ''}
+                      {w.estimated_duration_min} min
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-zinc-800 pt-4 text-sm">
+            <span className="text-zinc-400">geselecteerde duur</span>
+            <span className="font-extrabold text-emerald-400 tabular-nums">
+              {manualTotalMinutes} min
+            </span>
+          </div>
+
+          <button
+            type="button"
+            disabled={saving || !manualDate || selectedWorkoutIds.length === 0}
+            onClick={() => void saveSession(manualDate, selectedWorkoutIds, 'manual')}
+            className="min-h-12 w-full rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-zinc-950 transition-all active:scale-[0.99] hover:bg-emerald-400 disabled:opacity-40"
+          >
+            {saving ? 'opslaan...' : 'training opslaan'}
+          </button>
+        </section>
       )}
     </div>
   )

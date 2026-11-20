@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { createServerSupabase } from '@/lib/supabase/server'
 import {
   WeekPlannerClient,
@@ -70,17 +72,27 @@ export default async function WeekPage() {
     .order('scheduled_date', { ascending: true })
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6">
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
-          weekoverzicht
-        </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
-          weekplanner
-        </h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          sleep een sessie naar een andere dag om je planning (en optioneel latere sessies) te verschuiven.
-        </p>
+    <div className="mx-auto max-w-6xl space-y-5 px-4 py-5 pb-24 sm:px-6">
+      <div className="flex items-center justify-between gap-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+            huidige week
+          </p>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white">
+            weekplanning
+          </h1>
+          <p className="mt-1 text-sm text-zinc-400">
+            tik op <span className="font-semibold text-emerald-400">+</span> op een dag om te plannen, of sleep een sessie naar een andere dag.
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard"
+          className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-800 px-3.5 py-2.5 text-xs font-bold text-zinc-200 transition-colors hover:border-zinc-600"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>overzicht</span>
+        </Link>
       </div>
 
       <WeekPlannerClient
