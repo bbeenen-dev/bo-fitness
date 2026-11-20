@@ -25,7 +25,7 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link
             href="/dashboard"
             title={userEmail ? `BO-FITNESS (${userEmail})` : 'BO-FITNESS'}
@@ -37,10 +37,10 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
 
           <Link
             href="/dashboard/statistieken"
-            className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+            className={`shrink-0 whitespace-nowrap rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
               isStatsActive
-                ? 'bg-emerald-500 text-zinc-950'
-                : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                ? 'border-emerald-400 bg-emerald-500 text-zinc-950'
+                : 'border-zinc-700 bg-zinc-800 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-700 hover:text-white'
             }`}
           >
             statistieken
@@ -49,7 +49,7 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {userEmail && (
-            <span className="hidden truncate max-w-44 text-xs text-zinc-400 lg:inline">
+            <span className="hidden max-w-44 truncate text-xs text-zinc-400 lg:inline">
               {userEmail}
             </span>
           )}
