@@ -109,12 +109,12 @@ function CompactAnimatedLinePlot({
     }
   }, [animKey, series])
 
-  const width = 560
-  const height = 165
-  const padLeft = 48
-  const padRight = 16
-  const padTop = 18
-  const padBottom = 28
+  const width = 580
+  const height = 185
+  const padLeft = 58
+  const padRight = 18
+  const padTop = 24
+  const padBottom = 32
   const innerW = width - padLeft - padRight
   const innerH = height - padTop - padBottom
 
@@ -154,11 +154,11 @@ function CompactAnimatedLinePlot({
         <svg
           key={animKey}
           viewBox={`0 0 ${width} ${height}`}
-          className="block h-40 w-full"
+          className="block h-44 w-full"
           role="img"
           aria-label={ariaLabel}
         >
-          {/* Gridlijnen + Y-as labels */}
+          {/* Gridlijnen + grotere Y-as cijfers */}
           {yTicks.map((ratio, idx) => {
             const y = padTop + innerH - ratio * innerH
             const val = Math.round(maxVal * ratio)
@@ -181,9 +181,9 @@ function CompactAnimatedLinePlot({
                 )}
                 <text
                   x={padLeft - 8}
-                  y={y + 4}
+                  y={y + 4.5}
                   textAnchor="end"
-                  className="fill-zinc-400 text-[10px] tabular-nums"
+                  className="fill-zinc-300 text-[13px] font-bold tabular-nums"
                 >
                   {val.toLocaleString('nl-NL')}
                 </text>
@@ -231,7 +231,7 @@ function CompactAnimatedLinePlot({
                   x1={x}
                   y1={padTop + innerH}
                   x2={x}
-                  y2={padTop + innerH + 4}
+                  y2={padTop + innerH + 5}
                   stroke="#71717a"
                   strokeWidth="1.5"
                 />
@@ -239,7 +239,7 @@ function CompactAnimatedLinePlot({
                   x={x}
                   y={height - 7}
                   textAnchor="middle"
-                  className="fill-zinc-300 text-[10px] font-bold tabular-nums"
+                  className="fill-zinc-200 text-[13px] font-extrabold tabular-nums"
                 >
                   {wk.label}
                 </text>
@@ -293,7 +293,7 @@ function CompactAnimatedLinePlot({
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r="4"
+                      r="4.5"
                       fill={s.color}
                       stroke="#09090b"
                       strokeWidth="1.5"
@@ -301,9 +301,9 @@ function CompactAnimatedLinePlot({
                     {p.val > 0 && (
                       <text
                         x={p.x}
-                        y={p.y - 7}
+                        y={p.y - 9}
                         textAnchor="middle"
-                        className="fill-zinc-200 text-[9px] font-bold tabular-nums"
+                        className="fill-white text-[12px] font-extrabold tabular-nums"
                       >
                         {p.val.toLocaleString('nl-NL')}
                       </text>
@@ -472,14 +472,14 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
 
   return (
     <div className="space-y-4 pb-8">
-      {/* 1) Eenvoudige groene header zonder overzicht-knop */}
+      {/* Alleen de groene header voor analyse afgelopen 5 weken */}
       <div className="rounded-2xl bg-emerald-600 px-4 py-3">
         <h1 className="text-lg font-extrabold tracking-tight text-white">
           Analyse afgelopen 5 weken
         </h1>
       </div>
 
-      {/* 3) Blok: activiteit in kilo's per week */}
+      {/* Blok: activiteit in kilo's per week */}
       <section className="space-y-2 rounded-3xl border border-zinc-800 bg-zinc-900 p-4">
         <h2 className="text-sm font-bold text-white">
           activiteit in kilo&apos;s per week
@@ -492,7 +492,7 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
         />
       </section>
 
-      {/* 4) Blok: progressie per spiergroep */}
+      {/* Blok: progressie per spiergroep */}
       <section className="space-y-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-bold text-white">
