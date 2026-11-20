@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Home } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
@@ -11,6 +11,7 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
 
+  const isHomeActive = pathname === '/dashboard'
   const isStatsActive = pathname?.startsWith('/dashboard/statistieken')
 
   async function handleLogout() {
@@ -23,16 +24,23 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+    <nav
+      aria-label="Hoofdnavigatie"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-md"
+    >
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-1.5 px-3 sm:px-6">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Link
             href="/dashboard"
-            title={userEmail ? `BO-FITNESS (${userEmail})` : 'BO-FITNESS'}
-            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-extrabold tracking-tight text-white sm:text-base"
+            title={userEmail ? `Home (${userEmail})` : 'Home'}
+            className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              isHomeActive
+                ? 'border-emerald-400 bg-emerald-500 text-zinc-950'
+                : 'border-zinc-700 bg-zinc-800 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-700 hover:text-white'
+            }`}
           >
-            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400" />
-            <span>BO-FITNESS</span>
+            <Home className="h-3.5 w-3.5 shrink-0" />
+            <span>home</span>
           </Link>
 
           <Link
@@ -74,6 +82,6 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
           </button>
         </div>
       </div>
-    </header>
+    </nav>
   )
 }
