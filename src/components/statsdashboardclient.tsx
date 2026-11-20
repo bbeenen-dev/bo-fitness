@@ -109,12 +109,12 @@ function CompactAnimatedLinePlot({
     }
   }, [animKey, series])
 
-  const width = 600
-  const height = 205
-  const padLeft = 72
-  const padRight = 22
-  const padTop = 32
-  const padBottom = 38
+  const width = 620
+  const height = 225
+  const padLeft = 86
+  const padRight = 26
+  const padTop = 38
+  const padBottom = 42
   const innerW = width - padLeft - padRight
   const innerH = height - padTop - padBottom
 
@@ -154,11 +154,11 @@ function CompactAnimatedLinePlot({
         <svg
           key={animKey}
           viewBox={`0 0 ${width} ${height}`}
-          className="block h-48 w-full"
+          className="block h-52 w-full"
           role="img"
           aria-label={ariaLabel}
         >
-          {/* Gridlijnen + grote Y-as getallen */}
+          {/* Gridlijnen + extra grote Y-as getallen */}
           {yTicks.map((ratio, idx) => {
             const y = padTop + innerH - ratio * innerH
             const val = Math.round(maxVal * ratio)
@@ -181,9 +181,9 @@ function CompactAnimatedLinePlot({
                 )}
                 <text
                   x={padLeft - 10}
-                  y={y + 5.5}
+                  y={y + 6.5}
                   textAnchor="end"
-                  className="fill-zinc-200 text-[16px] font-extrabold tabular-nums"
+                  className="fill-zinc-200 text-[19px] font-extrabold tabular-nums"
                 >
                   {val.toLocaleString('nl-NL')}
                 </text>
@@ -239,7 +239,7 @@ function CompactAnimatedLinePlot({
                   x={x}
                   y={height - 8}
                   textAnchor="middle"
-                  className="fill-zinc-100 text-[16px] font-extrabold tabular-nums"
+                  className="fill-zinc-100 text-[19px] font-extrabold tabular-nums"
                 >
                   {wk.label}
                 </text>
@@ -293,7 +293,7 @@ function CompactAnimatedLinePlot({
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r="4.5"
+                      r="5"
                       fill={s.color}
                       stroke="#09090b"
                       strokeWidth="1.5"
@@ -301,9 +301,9 @@ function CompactAnimatedLinePlot({
                     {p.val > 0 && (
                       <text
                         x={p.x}
-                        y={p.y - 11}
+                        y={p.y - 12}
                         textAnchor="middle"
-                        className="fill-white text-[15px] font-extrabold tabular-nums"
+                        className="fill-white text-[18px] font-extrabold tabular-nums"
                       >
                         {p.val.toLocaleString('nl-NL')}
                       </text>
@@ -472,13 +472,6 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
 
   return (
     <div className="space-y-4 pb-8">
-      {/* Alleen de groene header voor analyse afgelopen 5 weken */}
-      <div className="rounded-2xl bg-emerald-600 px-4 py-3">
-        <h1 className="text-lg font-extrabold tracking-tight text-white">
-          Analyse afgelopen 5 weken
-        </h1>
-      </div>
-
       {/* Blok: activiteit in kilo's per week */}
       <section className="space-y-2 rounded-3xl border border-zinc-800 bg-zinc-900 p-4">
         <h2 className="text-sm font-bold text-white">
