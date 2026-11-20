@@ -1,21 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-
-const navItems = [
-  { href: '/dashboard/volgende', label: 'volgende' },
-  { href: '/dashboard/plannen', label: 'plannen' },
-  { href: '/dashboard/week', label: 'week' },
-  { href: '/dashboard', label: 'statistieken' },
-]
 
 export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const isStatsActive = pathname?.startsWith('/dashboard/statistieken')
 
   async function handleLogout() {
+    if (loggingOut) return
+    setLoggingOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
@@ -24,52 +24,53 @@ export function DashboardNav({ userEmail }: { userEmail?: string | null }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-900/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-6">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <Link
-            href="/dashboard/volgende"
-            className="flex items-center gap-2 text-base font-extrabold tracking-tight text-white"
+            href="/dashboard"
+            title={userEmail ? `BO-FITNESS (${userEmail})` : 'BO-FITNESS'}
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-extrabold tracking-tight text-white sm:text-base"
           >
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400" />
             <span>BO-FITNESS</span>
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-            {navItems.map((item) => {
-              const isActive =
-                item.href === '/dashboard'
-                  ? pathname === '/dashboard'
-                  : pathname?.startsWith(item.href)
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
-                    isActive
-                      ? 'bg-emerald-500 text-zinc-950'
-                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
+          <Link
+            href="/dashboard/statistieken"
+            className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+              isStatsActive
+                ? 'bg-emerald-500 text-zinc-950'
+                : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+            }`}
+          >
+            statistieken
+          </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {userEmail && (
-            <span className="hidden text-xs text-zinc-400 md:inline">
+            <span className="hidden truncate max-w-44 text-xs text-zinc-400 lg:inline">
               {userEmail}
             </span>
           )}
+
           <button
             type="button"
-            onClick={handleLogout}
-            className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700 hover:text-white"
+            disabled={loggingOut}
+            onClick={() => void handleLogout()}
+            className="shrink-0 whitespace-nowrap rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700 hover:text-white disabled:opacity-40"
           >
-            uitloggen
+            {loggingOut ? 'uitloggen...' : 'uitloggen'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Ga terug"
+            className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-xl border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700 hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+            <span>terug</span>
           </button>
         </div>
       </div>
