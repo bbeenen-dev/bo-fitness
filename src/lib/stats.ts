@@ -44,12 +44,29 @@ export type MuscleProgressionPoint = {
   workoutNames: string[]
 }
 
+export type SetLogEntry = {
+  date: string
+  reps: number
+  weightKg: number
+}
+
+export type WorkoutWeeklySetEntry = {
+  muscleGroupId: string
+  workoutId: string
+  workoutName: string
+  date: string
+  sets: number
+  weightKg: number
+}
+
 export type DashboardStatsData = {
   totalAllTimeKg: number
   totalSessionsCount: number
   weeklyVolume: WeeklyVolumePoint[]
   muscleGroupTotals: MuscleGroupTotal[]
   progressionByMuscle: Record<string, MuscleProgressionPoint[]>
+  setLogs: SetLogEntry[]
+  workoutWeeklySets: WorkoutWeeklySetEntry[]
 }
 
 function getMondayUtc(dateStr: string): string {
@@ -93,6 +110,9 @@ export function buildDashboardStats(sessions: RawStatSession[]): DashboardStatsD
     >
   >()
 
+  const setLogs: SetLogEntry[] = []
+  const workoutWeeklySets: WorkoutWeeklySetEntry[] = []
+
   let totalAllTimeKg = 0
   const countedSessions = new Set<string>()
 
@@ -110,6 +130,8 @@ export function buildDashboardStats(sessions: RawStatSession[]): DashboardStatsD
       const mgId = mg?.id ?? 'onbekend'
       const mgName = mg?.name ?? 'onbekend'
       const mgSort = mg?.sort_order ?? 99
+      const workoutId = sw.workouts?.id ?? sw.id
+      const workoutName = sw.workouts?.name ?? 'workout'
 
       if (!muscleMap.has(mgId)) {
         muscleMap.set(mgId, {
@@ -130,18 +152,40 @@ export function buildDashboardStats(sessions: RawStatSession[]): DashboardStatsD
       let swMaxWeight = 0
       let swSetsCount = 0
 
+      // Per gewicht gegroepeerd aantal sets voor (sets * gewicht) per workout
+      const setsPerWeight = new Map<number, number>()
+
       for (const set of sw.workout_sets ?? []) {
         const w = Number(set.weight_kg ?? 0)
         const r = Number(set.reps ?? 0)
         const vol = w * r
+
         if (w > 0 || r > 0) {
           swSetsCount += 1
           sessionHasSets = true
+          setLogs.push({
+            date: session.scheduled_date,
+            reps: r,
+            weightKg: w,
+          })
+          setsPerWeight.set(w, (setsPerWeight.get(w) ?? 0) + 1)
         }
+
         swVolume += vol
         if (w > swMaxWeight) {
           swMaxWeight = w
         }
+      }
+
+      for (const [weightVal, countVal] of setsPerWeight.entries()) {
+        workoutWeeklySets.push({
+          muscleGroupId: mgId,
+          workoutId,
+          workoutName,
+          date: session.scheduled_date,
+          sets: countVal,
+          weightKg: weightVal,
+        })
       }
 
       totalAllTimeKg += swVolume
@@ -216,5 +260,7 @@ export function buildDashboardStats(sessions: RawStatSession[]): DashboardStatsD
     weeklyVolume,
     muscleGroupTotals,
     progressionByMuscle,
+    setLogs,
+    workoutWeeklySets,
   }
 }
