@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { RotateCcw } from 'lucide-react'
 import { DashboardStatsData } from '@/lib/stats'
 
 const WORKOUT_COLORS = [
@@ -69,30 +68,26 @@ function buildLast5Weeks(): Last5Week[] {
   return weeks
 }
 
-type AnimatedLineChartProps = {
-  title: string
-  subtitle: string
+type LinePlotProps = {
   weeks: Last5Week[]
   series: {
     id: string
     name: string
     color: string
-    valuesByWeek: number[] // lengte 5
+    valuesByWeek: number[]
   }[]
-  yUnitLabel?: string
   animKey: number
   ariaLabel: string
+  showLegend?: boolean
 }
 
-function AnimatedLineChart({
-  title,
-  subtitle,
+function CompactAnimatedLinePlot({
   weeks,
   series,
-  yUnitLabel = 'kg',
   animKey,
   ariaLabel,
-}: AnimatedLineChartProps) {
+  showLegend = false,
+}: LinePlotProps) {
   const [axesReady, setAxesReady] = useState(false)
   const [drawLines, setDrawLines] = useState(false)
 
@@ -102,11 +97,11 @@ function AnimatedLineChart({
 
     const t1 = window.setTimeout(() => {
       setAxesReady(true)
-    }, 60)
+    }, 120)
 
     const t2 = window.setTimeout(() => {
       setDrawLines(true)
-    }, 420)
+    }, 750)
 
     return () => {
       window.clearTimeout(t1)
@@ -114,12 +109,12 @@ function AnimatedLineChart({
     }
   }, [animKey, series])
 
-  const width = 680
-  const height = 250
-  const padLeft = 58
-  const padRight = 24
-  const padTop = 26
-  const padBottom = 40
+  const width = 560
+  const height = 165
+  const padLeft = 48
+  const padRight = 16
+  const padTop = 18
+  const padBottom = 28
   const innerW = width - padLeft - padRight
   const innerH = height - padTop - padBottom
 
@@ -134,23 +129,12 @@ function AnimatedLineChart({
   const getY = (val: number) =>
     padTop + innerH - (Math.max(0, val) / maxVal) * innerH
 
-  const yTicks = [0, 0.25, 0.5, 0.75, 1]
+  const yTicks = [0, 0.5, 1]
 
   return (
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-bold text-white">{title}</h2>
-          <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>
-        </div>
-        <span className="rounded-xl border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[11px] font-semibold text-zinc-400">
-          laatste 5 weken ({yUnitLabel})
-        </span>
-      </div>
-
-      {/* Legenda bij meerdere lijnen */}
-      {series.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
+    <div className="space-y-2.5">
+      {showLegend && series.length > 0 && (
+        <div className="flex flex-wrap gap-2">
           {series.map((s) => (
             <div
               key={s.id}
@@ -166,11 +150,11 @@ function AnimatedLineChart({
         </div>
       )}
 
-      <div className="mt-4 w-full overflow-x-auto">
+      <div className="w-full overflow-hidden">
         <svg
           key={animKey}
           viewBox={`0 0 ${width} ${height}`}
-          className="h-60 w-full min-w-[440px]"
+          className="block h-40 w-full"
           role="img"
           aria-label={ariaLabel}
         >
@@ -181,7 +165,7 @@ function AnimatedLineChart({
             return (
               <g
                 key={idx}
-                className={`transition-opacity duration-300 ${
+                className={`transition-opacity duration-500 ${
                   axesReady ? 'opacity-100' : 'opacity-0'
                 }`}
               >
@@ -196,10 +180,10 @@ function AnimatedLineChart({
                   />
                 )}
                 <text
-                  x={padLeft - 10}
+                  x={padLeft - 8}
                   y={y + 4}
                   textAnchor="end"
-                  className="fill-zinc-400 text-[11px] tabular-nums"
+                  className="fill-zinc-400 text-[10px] tabular-nums"
                 >
                   {val.toLocaleString('nl-NL')}
                 </text>
@@ -207,7 +191,7 @@ function AnimatedLineChart({
             )
           })}
 
-          {/* Y-as (verticaal) */}
+          {/* Y-as */}
           <line
             x1={padLeft}
             y1={padTop}
@@ -215,12 +199,12 @@ function AnimatedLineChart({
             y2={padTop + innerH}
             stroke="#71717a"
             strokeWidth="1.5"
-            className={`transition-opacity duration-300 ${
+            className={`transition-opacity duration-500 ${
               axesReady ? 'opacity-100' : 'opacity-0'
             }`}
           />
 
-          {/* X-as (horizontaal) */}
+          {/* X-as */}
           <line
             x1={padLeft}
             y1={padTop + innerH}
@@ -228,7 +212,7 @@ function AnimatedLineChart({
             y2={padTop + innerH}
             stroke="#71717a"
             strokeWidth="1.5"
-            className={`transition-opacity duration-300 ${
+            className={`transition-opacity duration-500 ${
               axesReady ? 'opacity-100' : 'opacity-0'
             }`}
           />
@@ -239,7 +223,7 @@ function AnimatedLineChart({
             return (
               <g
                 key={wk.key}
-                className={`transition-opacity duration-300 ${
+                className={`transition-opacity duration-500 ${
                   axesReady ? 'opacity-100' : 'opacity-0'
                 }`}
               >
@@ -247,15 +231,15 @@ function AnimatedLineChart({
                   x1={x}
                   y1={padTop + innerH}
                   x2={x}
-                  y2={padTop + innerH + 5}
+                  y2={padTop + innerH + 4}
                   stroke="#71717a"
                   strokeWidth="1.5"
                 />
                 <text
                   x={x}
-                  y={height - 10}
+                  y={height - 7}
                   textAnchor="middle"
-                  className="fill-zinc-300 text-[11px] font-bold tabular-nums"
+                  className="fill-zinc-300 text-[10px] font-bold tabular-nums"
                 >
                   {wk.label}
                 </text>
@@ -263,7 +247,7 @@ function AnimatedLineChart({
             )
           })}
 
-          {/* Lijnen (ingetekend van links naar rechts na verschijnen van assen) */}
+          {/* Lijnen (langzaam van links naar rechts ingetekend) */}
           {series.map((s) => {
             const pts = s.valuesByWeek.map((val, idx) => ({
               x: getX(idx),
@@ -274,7 +258,10 @@ function AnimatedLineChart({
             if (pts.length === 0) return null
 
             const dPath = pts
-              .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+              .map(
+                (p, i) =>
+                  `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`
+              )
               .join(' ')
 
             return (
@@ -284,14 +271,14 @@ function AnimatedLineChart({
                   pathLength={1}
                   fill="none"
                   stroke={s.color}
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{
                     strokeDasharray: 1,
                     strokeDashoffset: drawLines ? 0 : 1,
                     transition:
-                      'stroke-dashoffset 1100ms cubic-bezier(0.22, 1, 0.36, 1)',
+                      'stroke-dashoffset 2200ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 />
 
@@ -300,23 +287,23 @@ function AnimatedLineChart({
                     key={i}
                     style={{
                       opacity: drawLines ? 1 : 0,
-                      transition: `opacity 300ms ease ${250 + i * 160}ms`,
+                      transition: `opacity 400ms ease ${450 + i * 350}ms`,
                     }}
                   >
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r="4.5"
+                      r="4"
                       fill={s.color}
                       stroke="#09090b"
-                      strokeWidth="2"
+                      strokeWidth="1.5"
                     />
                     {p.val > 0 && (
                       <text
                         x={p.x}
-                        y={p.y - 9}
+                        y={p.y - 7}
                         textAnchor="middle"
-                        className="fill-zinc-200 text-[10px] font-bold tabular-nums"
+                        className="fill-zinc-200 text-[9px] font-bold tabular-nums"
                       >
                         {p.val.toLocaleString('nl-NL')}
                       </text>
@@ -328,13 +315,13 @@ function AnimatedLineChart({
           })}
         </svg>
       </div>
-    </section>
+    </div>
   )
 }
 
 export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
   const last5Weeks = useMemo(() => buildLast5Weeks(), [])
-  const [animKey, setAnimKey] = useState(1)
+  const [animKey] = useState(1)
 
   const muscleOptions = useMemo(() => {
     return stats.muscleGroupTotals ?? []
@@ -350,9 +337,7 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
     }
   }, [muscleOptions, selectedMuscleId])
 
-  // 1) Bovenste grafiek: totaal verwerkte kilo's (reps * gewicht per set) per week over de laatste 5 weken
   const weeklyKgSeries = useMemo(() => {
-    // Probeer eerst gedetailleerde set/sessie-data uit stats te lezen indien aanwezig
     const rawAny = stats as unknown as {
       setLogs?: {
         date: string
@@ -368,7 +353,6 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
           .reduce((sum, log) => sum + (log.reps || 0) * (log.weightKg || 0), 0)
       }
 
-      // Fallback op stats.weeklyVolume (match op weeknummer of datumrange)
       const matched = (stats.weeklyVolume ?? []).find((w) => {
         if (w.weekStart && w.weekStart >= wk.startDate && w.weekStart <= wk.endDate) {
           return true
@@ -382,14 +366,13 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
     return [
       {
         id: 'total-weekly-kg',
-        name: "totaal verwerkte kilo's (reps × gewicht)",
+        name: "activiteit in kilo's",
         color: '#10b981',
         valuesByWeek,
       },
     ]
   }, [stats, last5Weeks])
 
-  // 2) Onderste grafiek: per spiergroep -> per workout -> per week (laatste 5 weken) som van (sets * gewicht)
   const workoutSeriesForSelectedMuscle = useMemo(() => {
     const rawAny = stats as unknown as {
       workoutWeeklySets?: {
@@ -402,8 +385,10 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
       }[]
     }
 
-    // Als gedetailleerde workout-set data beschikbaar is: groepeer per workout en tel (sets * gewicht) op per week
-    if (Array.isArray(rawAny.workoutWeeklySets) && rawAny.workoutWeeklySets.length > 0) {
+    if (
+      Array.isArray(rawAny.workoutWeeklySets) &&
+      rawAny.workoutWeeklySets.length > 0
+    ) {
       const filtered = rawAny.workoutWeeklySets.filter(
         (item) => item.muscleGroupId === selectedMuscleId
       )
@@ -437,14 +422,12 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
       }))
     }
 
-    // Fallback op progressionByMuscle wanneer workout-namen in punten staan
     const points = stats.progressionByMuscle?.[selectedMuscleId] ?? []
     const workoutNames = Array.from(
       new Set(points.flatMap((p) => p.workoutNames ?? []))
     )
 
     if (workoutNames.length === 0) {
-      // Laatste fallback: één lijn op basis van maxWeightKg * 3 sets per week
       const valuesByWeek = last5Weeks.map((wk) => {
         const pt = points.find(
           (p) => p.date >= wk.startDate && p.date <= wk.endDate
@@ -488,76 +471,54 @@ export function StatsDashboardClient({ stats }: { stats: DashboardStatsData }) {
   }, [stats, selectedMuscleId, last5Weeks, muscleOptions])
 
   return (
-    <div className="space-y-6 pb-24">
-      {/* Knop om lijn-animatie opnieuw af te spelen */}
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3">
-        <p className="text-xs font-medium text-zinc-400">
-          weken <span className="font-bold text-emerald-400">{last5Weeks[0]?.label}</span> t/m{' '}
-          <span className="font-bold text-emerald-400">{last5Weeks[4]?.label}</span> (inclusief huidige week)
-        </p>
-        <button
-          type="button"
-          onClick={() => setAnimKey((k) => k + 1)}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-200 transition-colors hover:border-emerald-500/50 hover:text-emerald-300"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          <span>opnieuw afspelen</span>
-        </button>
+    <div className="space-y-4 pb-8">
+      {/* 1) Eenvoudige groene header zonder overzicht-knop */}
+      <div className="rounded-2xl bg-emerald-600 px-4 py-3">
+        <h1 className="text-lg font-extrabold tracking-tight text-white">
+          Analyse afgelopen 5 weken
+        </h1>
       </div>
 
-      {/* 1) Bovenin: lijndiagram verwerkte kilo's per week (laatste 5 weken) */}
-      <AnimatedLineChart
-        title="verwerkte kilo's per week"
-        subtitle="alle workouts per week opgeteld op basis van reps × gewicht per set."
-        weeks={last5Weeks}
-        series={weeklyKgSeries}
-        yUnitLabel="kg"
-        animKey={animKey}
-        ariaLabel="Lijndiagram verwerkte kilo's per week over de laatste 5 weken"
-      />
+      {/* 3) Blok: activiteit in kilo's per week */}
+      <section className="space-y-2 rounded-3xl border border-zinc-800 bg-zinc-900 p-4">
+        <h2 className="text-sm font-bold text-white">
+          activiteit in kilo&apos;s per week
+        </h2>
+        <CompactAnimatedLinePlot
+          weeks={last5Weeks}
+          series={weeklyKgSeries}
+          animKey={animKey}
+          ariaLabel="Activiteit in kilo's per week over de laatste 5 weken"
+        />
+      </section>
 
-      {/* 2) Onderin: picklist spiergroep + lijndiagram per workout (sets * gewicht) */}
-      <section className="space-y-4 rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-white">
-              progressie per workout binnen spiergroep
-            </h2>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              per week opgeteld: som van (aantal sets × gewicht) per workout over de laatste 5 weken.
-            </p>
-          </div>
+      {/* 4) Blok: progressie per spiergroep */}
+      <section className="space-y-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-bold text-white">
+            progressie per spiergroep
+          </h2>
 
-          <label className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              spiergroep
-            </span>
-            <select
-              value={selectedMuscleId}
-              onChange={(e) => setSelectedMuscleId(e.target.value)}
-              aria-label="kies spiergroep"
-              className="min-h-11 rounded-2xl border border-zinc-700 bg-zinc-950 px-3.5 py-2 text-sm font-bold text-white focus:border-emerald-400 focus:outline-none"
-            >
-              {muscleOptions.map((m) => (
-                <option key={m.muscleGroupId} value={m.muscleGroupId}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <select
+            value={selectedMuscleId}
+            onChange={(e) => setSelectedMuscleId(e.target.value)}
+            aria-label="kies spiergroep"
+            className="min-h-10 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-xs font-bold text-white focus:border-emerald-400 focus:outline-none"
+          >
+            {muscleOptions.map((m) => (
+              <option key={m.muscleGroupId} value={m.muscleGroupId}>
+                {m.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <AnimatedLineChart
-          title={
-            muscleOptions.find((m) => m.muscleGroupId === selectedMuscleId)?.name ??
-            'spiergroep'
-          }
-          subtitle="elke kleur is een workout; y-as toont (sets × gewicht) opgeteld per week."
+        <CompactAnimatedLinePlot
           weeks={last5Weeks}
           series={workoutSeriesForSelectedMuscle}
-          yUnitLabel="sets×kg"
           animKey={animKey}
-          ariaLabel="Lijndiagram progressie per workout binnen gekozen spiergroep"
+          ariaLabel="Progressie per spiergroep over de laatste 5 weken"
+          showLegend
         />
       </section>
     </div>
