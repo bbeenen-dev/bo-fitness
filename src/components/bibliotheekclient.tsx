@@ -195,15 +195,6 @@ export function BibliotheekClient({
     setFeedback(null)
 
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      setSaving(false)
-      setErrorMsg('je bent niet ingelogd.')
-      return
-    }
 
     const nextOrder =
       muscleGroups.reduce((max, g) => Math.max(max, g.sort_order ?? 0), 0) + 1
@@ -211,7 +202,6 @@ export function BibliotheekClient({
     const { data, error } = await supabase
       .from('muscle_groups')
       .insert({
-        user_id: user.id,
         name: trimmed,
         allows_frequent_repeat: newGroupFrequent,
         sort_order: nextOrder,
@@ -297,20 +287,9 @@ export function BibliotheekClient({
     const supabase = createClient()
 
     if (editingWorkoutId === 'new') {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        setSaving(false)
-        setErrorMsg('je bent niet ingelogd.')
-        return
-      }
-
       const { data, error } = await supabase
         .from('workouts')
         .insert({
-          user_id: user.id,
           muscle_group_id: activeGroupId,
           name: trimmedName,
           estimated_duration_min: durationNum,
