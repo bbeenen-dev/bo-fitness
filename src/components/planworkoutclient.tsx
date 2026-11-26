@@ -127,29 +127,74 @@ export function PlanWorkoutClient({
       return sum + (w?.estimated_duration_min ?? 0)
     }, 0)
 
-    const { data: createdSession, error: sessionError } = await supabase
+    const { data: existingSession, error: existingErr } = await supabase
       .from('training_sessions')
-      .insert({
-        user_id: user.id,
-        scheduled_date: scheduledDate,
-        status: 'planned',
-        source,
-        total_duration_min: totalDuration,
-      })
-      .select('id')
-      .single()
+      .select('id, total_duration_min')
+      .eq('user_id', user.id)
+      .eq('scheduled_date', scheduledDate)
+      .maybeSingle()
 
-    if (sessionError || !createdSession) {
+    if (existingErr) {
       setSaving(false)
-      setErrorMsg(sessionError?.message ?? 'OPSLAAN MISLUKT.')
+      setErrorMsg(existingErr.message)
       return
+    }
+
+    let sessionId: string
+    let startSortOrder = 1
+
+    if (existingSession) {
+      sessionId = existingSession.id
+      const updatedDuration =
+        (existingSession.total_duration_min ?? 0) + totalDuration
+
+      const { error: updateErr } = await supabase
+        .from('training_sessions')
+        .update({ total_duration_min: updatedDuration })
+        .eq('id', sessionId)
+
+      if (updateErr) {
+        setSaving(false)
+        setErrorMsg(updateErr.message)
+        return
+      }
+
+      const { data: existingSw } = await supabase
+        .from('session_workouts')
+        .select('sort_order')
+        .eq('training_session_id', sessionId)
+        .order('sort_order', { ascending: false })
+        .limit(1)
+
+      const maxSort = existingSw?.[0]?.sort_order ?? 0
+      startSortOrder = maxSort + 1
+    } else {
+      const { data: createdSession, error: sessionError } = await supabase
+        .from('training_sessions')
+        .insert({
+          user_id: user.id,
+          scheduled_date: scheduledDate,
+          status: 'planned',
+          source,
+          total_duration_min: totalDuration,
+        })
+        .select('id')
+        .single()
+
+      if (sessionError || !createdSession) {
+        setSaving(false)
+        setErrorMsg(sessionError?.message ?? 'OPSLAAN MISLUKT.')
+        return
+      }
+
+      sessionId = createdSession.id
     }
 
     const rows = workoutIds.map((workoutId, index) => ({
       user_id: user.id,
-      training_session_id: createdSession.id,
+      training_session_id: sessionId,
       workout_id: workoutId,
-      sort_order: index + 1,
+      sort_order: startSortOrder + index,
       is_completed: false,
     }))
 
