@@ -72,6 +72,7 @@ export default async function WeekPage({
     : 0;
 
   const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
   const dayOfWeek = now.getUTCDay();
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
@@ -93,10 +94,12 @@ export default async function WeekPage({
         monday.getUTCDate() + idx
       )
     );
+    const dateStr = dt.toISOString().slice(0, 10);
     return {
-      dateStr: dt.toISOString().slice(0, 10),
+      dateStr,
       dayName: DAY_NAMES[idx],
       dayNumber: `${dt.getUTCDate()}/${dt.getUTCMonth() + 1}`,
+      isToday: dateStr === todayStr,
     };
   });
 
@@ -164,7 +167,11 @@ export default async function WeekPage({
               <Link
                 key={day.dateStr}
                 href={`/dashboard/training?date=${day.dateStr}`}
-                className="flex min-h-20 w-full flex-col justify-center rounded-3xl border border-zinc-800 bg-zinc-900 px-6 py-4 text-white transition-colors hover:border-emerald-400 hover:bg-zinc-800/90 active:scale-[0.99]"
+                className={`flex min-h-20 w-full flex-col justify-center rounded-3xl bg-zinc-900 px-6 py-4 text-white transition-colors hover:bg-zinc-800/90 active:scale-[0.99] ${
+                  day.isToday
+                    ? 'border-2 border-white'
+                    : 'border border-zinc-800 hover:border-emerald-400'
+                }`}
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-xl font-black tracking-wide text-white sm:text-2xl">
