@@ -1,15 +1,58 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import { createServerSupabase } from '@/lib/supabase/server'
-import {
-  WeekPlannerClient,
-  WeekSessionItem,
-} from '@/components/weekplannerclient'
 
-const DUTCH_DAYS = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za']
+const DAY_NAMES = [
+  'MAANDAG',
+  'DINSDAG',
+  'WOENSDAG',
+  'DONDERDAG',
+  'VRIJDAG',
+  'ZATERDAG',
+  'ZONDAG',
+]
 
-export default async function WeekPage() {
+type SessionRow = {
+  id: string
+  scheduled_date: string
+  status: string | null
+  session_workouts: {
+    id: string
+    is_completed: boolean | null
+  }[] | null
+}
+
+function getIsoWeekNumber(date: Date): number {
+  const d = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  )
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+}
+
+function getDayStatusLabel(sessionsForDay: SessionRow[]): 'GEPLAND' | 'AFGEROND' | null {
+  if (sessionsForDay.length === 0) return null
+
+  const hasCompleted = sessionsForDay.some(
+    (s) =>
+      s.status === 'completed' ||
+      s.status === 'afgerond' ||
+      (s.session_workouts &&
+        s.session_workouts.length > 0 &&
+        s.session_workouts.every((w) => Boolean(w.is_completed)))
+  )
+
+  if (hasCompleted) return 'AFGEROND'
+  return 'GEPLAND'
+}
+
+export default async function WeekPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ offset?: string }>
+}) {
   const supabase = await createServerSupabase()
 
   const {
@@ -20,31 +63,41 @@ export default async function WeekPage() {
     redirect('/login')
   }
 
-  const now = new Date()
-  const todayStr = now.toISOString().slice(0, 10)
+  const resolvedParams = await searchParams
+  const parsedOffset = Number(resolvedParams?.offset ?? '0')
+  const weekOffset = Number.isFinite(parsedOffset) ? Math.trunc(parsedOffset) : 0
 
-  // Maandag van de huidige week berekenen
+  const now = new Date()
   const dayOfWeek = now.getUTCDay()
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+
   const monday = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday)
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + diffToMonday + weekOffset * 7
+    )
   )
 
-  const weekDays = Array.from({ length: 7 }, (_, idx) => {
+  const weekNumber = getIsoWeekNumber(monday)
+
+  const days = Array.from({ length: 7 }, (_, idx) => {
     const dt = new Date(
-      Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + idx)
+      Date.UTC(
+        monday.getUTCFullYear(),
+        monday.getUTCMonth(),
+        monday.getUTCDate() + idx
+      )
     )
-    const dateStr = dt.toISOString().slice(0, 10)
     return {
-      dateStr,
-      dayLabel: DUTCH_DAYS[dt.getUTCDay()],
+      dateStr: dt.toISOString().slice(0, 10),
+      dayName: DAY_NAMES[idx],
       dayNumber: `${dt.getUTCDate()}/${dt.getUTCMonth() + 1}`,
-      isToday: dateStr === todayStr,
     }
   })
 
-  const startStr = weekDays[0].dateStr
-  const endStr = weekDays[6].dateStr
+  const startStr = days[0].dateStr
+  const endStr = days[6].dateStr
 
   const { data: sessions } = await supabase
     .from('training_sessions')
@@ -53,17 +106,9 @@ export default async function WeekPage() {
       id,
       scheduled_date,
       status,
-      total_duration_min,
       session_workouts (
         id,
-        sort_order,
-        is_completed,
-        workouts (
-          id,
-          name,
-          estimated_duration_min,
-          muscle_groups ( name )
-        )
+        is_completed
       )
     `
     )
@@ -71,34 +116,85 @@ export default async function WeekPage() {
     .lte('scheduled_date', endStr)
     .order('scheduled_date', { ascending: true })
 
+  const sessionList = (sessions ?? []) as unknown as SessionRow[]
+
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-4 py-5 pb-24 sm:px-6">
-      <div className="flex items-center justify-between gap-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-            huidige week
-          </p>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white">
-            weekplanning
+    <div className="min-h-screen bg-zinc-950 pb-24 text-white">
+      <div className="mx-auto max-w-2xl space-y-4 px-4 pt-5 sm:px-6">
+        <header className="space-y-3">
+          <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+            WEEKPLANNING
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            tik op <span className="font-semibold text-emerald-400">+</span> op een dag om te plannen, of sleep een sessie naar een andere dag.
-          </p>
-        </div>
 
-        <Link
-          href="/dashboard"
-          className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-800 px-3.5 py-2.5 text-xs font-bold text-zinc-200 transition-colors hover:border-zinc-600"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>overzicht</span>
-        </Link>
+          <div className="flex items-center justify-between rounded-3xl border border-zinc-800 bg-zinc-900 px-4 py-3">
+            <Link
+              href={`/dashboard/week?offset=${weekOffset - 1}`}
+              aria-label="Vorige week"
+              className="flex h-12 w-14 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-800 text-2xl font-black text-white transition-colors hover:border-emerald-400 hover:bg-zinc-700"
+            >
+              &lt;
+            </Link>
+
+            <span className="text-lg font-extrabold tracking-wide text-white">
+              WEEK {weekNumber}
+            </span>
+
+            <Link
+              href={`/dashboard/week?offset=${weekOffset + 1}`}
+              aria-label="Volgende week"
+              className="flex h-12 w-14 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-800 text-2xl font-black text-white transition-colors hover:border-emerald-400 hover:bg-zinc-700"
+            >
+              &gt;
+            </Link>
+          </div>
+        </header>
+
+        <nav aria-label="Dagen van de week" className="space-y-3.5">
+          {days.map((day) => {
+            const daySessions = sessionList.filter(
+              (s) => s.scheduled_date === day.dateStr
+            )
+            const statusLabel = getDayStatusLabel(daySessions)
+            const firstWorkoutId = daySessions[0]?.session_workouts?.[0]?.id
+
+            const targetHref =
+              statusLabel === 'AFGEROND'
+                ? '/dashboard/historie'
+                : firstWorkoutId
+                  ? `/dashboard/log/${firstWorkoutId}`
+                  : '/dashboard/volgende'
+
+            return (
+              <Link
+                key={day.dateStr}
+                href={targetHref}
+                className="flex min-h-20 w-full flex-col justify-center rounded-3xl border border-zinc-800 bg-zinc-900 px-6 py-4 text-white transition-colors hover:border-emerald-400 hover:bg-zinc-800/90 active:scale-[0.99]"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-xl font-black tracking-wide text-white sm:text-2xl">
+                    {day.dayName}
+                  </span>
+                  <span className="text-sm font-bold text-zinc-400">
+                    {day.dayNumber}
+                  </span>
+                </div>
+
+                {statusLabel && (
+                  <span
+                    className={`mt-1 text-sm font-extrabold tracking-wider ${
+                      statusLabel === 'AFGEROND'
+                        ? 'text-emerald-400'
+                        : 'text-amber-300'
+                    }`}
+                  >
+                    {statusLabel}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </nav>
       </div>
-
-      <WeekPlannerClient
-        initialSessions={(sessions ?? []) as unknown as WeekSessionItem[]}
-        weekDays={weekDays}
-      />
     </div>
   )
 }
