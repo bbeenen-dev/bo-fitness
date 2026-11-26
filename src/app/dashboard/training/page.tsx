@@ -126,7 +126,7 @@ export default async function TrainingDayPage({
               href={`/dashboard/plannen?date=${dateStr}`}
               className="flex min-h-20 w-full items-center rounded-3xl border border-emerald-500/40 bg-zinc-900 px-6 py-5 text-xl font-black tracking-wide text-white transition-colors hover:border-emerald-400 hover:bg-zinc-800/90 active:scale-[0.99] sm:text-2xl"
             >
-              <span>TRAINING PLANNEN</span>
+              <span>TRAINING SAMENSTELLEN</span>
             </Link>
           </div>
         ) : (
