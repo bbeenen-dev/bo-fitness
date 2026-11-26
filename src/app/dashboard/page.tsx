@@ -9,10 +9,22 @@ type TodaySession = {
   id: string
   scheduled_date: string
   status: string
-  session_workouts: {
-    id: string
-    is_completed: boolean
-  }[]
+}
+
+function getLocalTodayStr(): string {
+  const now = new Date()
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Amsterdam',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now)
+
+  const year = parts.find((p) => p.type === 'year')?.value ?? '1970'
+  const month = parts.find((p) => p.type === 'month')?.value ?? '01'
+  const day = parts.find((p) => p.type === 'day')?.value ?? '01'
+
+  return `${year}-${month}-${day}`
 }
 
 export default async function DashboardHomePage() {
@@ -26,36 +38,21 @@ export default async function DashboardHomePage() {
     redirect('/login')
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = getLocalTodayStr()
 
-  const { data: todaySessions } = await supabase
+  const { data: todaySession } = await supabase
     .from('training_sessions')
-    .select(
-      `
-      id,
-      scheduled_date,
-      status,
-      session_workouts (
-        id,
-        is_completed
-      )
-    `
-    )
+    .select('id, scheduled_date, status')
     .eq('scheduled_date', todayStr)
-    .order('id', { ascending: true })
-    .limit(1)
+    .maybeSingle()
 
-  const todaySession = ((todaySessions ?? [])[0] ?? null) as unknown as TodaySession | null
-  const firstWorkout = todaySession?.session_workouts?.[0]
-
-  const todayHref = todaySession
-    ? firstWorkout
-      ? `/dashboard/log/${firstWorkout.id}`
-      : '/dashboard/volgende'
-    : '/dashboard/week'
+  const hasTodaySession = Boolean((todaySession as TodaySession | null)?.id)
 
   const tiles = [
-    { label: 'TRAINING VANDAAG', href: todayHref },
+    {
+      label: 'TRAINING VANDAAG',
+      href: hasTodaySession ? `/dashboard/training?date=${todayStr}` : null,
+    },
     { label: 'WEEKPLANNING', href: '/dashboard/week' },
     { label: 'WORKOUT HISTORIE', href: '/dashboard/workout-historie' },
     { label: 'TRAINING HISTORIE', href: '/dashboard/historie' },
@@ -87,15 +84,25 @@ export default async function DashboardHomePage() {
           aria-label="Dashboard menu"
           className="space-y-3.5 px-4 pt-4 sm:px-6"
         >
-          {tiles.map((tile) => (
-            <Link
-              key={tile.label}
-              href={tile.href}
-              className="flex min-h-20 w-full items-center rounded-3xl border border-zinc-800 bg-zinc-900 px-6 py-5 text-xl font-black tracking-wide text-white transition-colors hover:border-emerald-400 hover:bg-zinc-800/90 active:scale-[0.99] sm:text-2xl"
-            >
-              <span>{tile.label}</span>
-            </Link>
-          ))}
+          {tiles.map((tile) =>
+            tile.href ? (
+              <Link
+                key={tile.label}
+                href={tile.href}
+                className="flex min-h-20 w-full items-center rounded-3xl border border-zinc-800 bg-zinc-900 px-6 py-5 text-xl font-black tracking-wide text-white transition-colors hover:border-emerald-400 hover:bg-zinc-800/90 active:scale-[0.99] sm:text-2xl"
+              >
+                <span>{tile.label}</span>
+              </Link>
+            ) : (
+              <div
+                key={tile.label}
+                aria-disabled="true"
+                className="flex min-h-20 w-full items-center rounded-3xl border border-zinc-800 bg-zinc-900 px-6 py-5 text-xl font-black tracking-wide text-white sm:text-2xl"
+              >
+                <span>{tile.label}</span>
+              </div>
+            )
+          )}
         </nav>
       </div>
     </div>
